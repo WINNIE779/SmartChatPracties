@@ -40,10 +40,10 @@ export const SkilManagement = () => {
   };
 
   return (
-    <div className="bg-[#efeeee] bg-opacity-50 px-4 h-screen overflow-hidden overscroll-none md:flex-col">
+    <div className="bg-[#efeeee] bg-opacity-50 px-4 h-screen overflow-auto overscroll-none md:flex-col">
       <div className="font-semibold px-4 mt-6">技能管理</div>
 
-      <div className="bg-[#ffffff] bg-opacity-80 rounded-2xl flex justify-between my-4 items-center px-6 py-4">
+      <div className="bg-[#ffffff] bg-opacity-80 rounded-2xl flex justify-between my-4 items-center px-6 py-4 min-w-[52rem]">
         <div className="flex justify-center items-center">
           <span className="text-[#323444]">篩選類型：</span>
           {typeSelect.map((item, index) => {
@@ -62,7 +62,7 @@ export const SkilManagement = () => {
             <Icon component={skillSearchIcon} />
           </div>
         </div>
-        <div className="rounded-lg px-0.5 h-[2.9rem] flex justify-center items-center bg-gradient-to-r from-[#23D2FF] to-[#FFCE21] cursor-pointer">
+        <div className="rounded-lg px-0.5 h-[2.9rem] flex justify-center items-center bg-gradient-to-r from-[#23D2FF] via-[#5B53FF] via-[#AA56FF] to-[#FFCE21] cursor-pointer">
           <div className="bg-[#ffffff] text-[#5B53FF] text-[0.88rem] w-[7.25rem] h-[2.75rem] flex items-center justify-center rounded-lg">
             <Icon component={addSkillIcon} className="px-1" />
             新增技能
@@ -70,13 +70,13 @@ export const SkilManagement = () => {
         </div>
       </div>
 
-      <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 h-[40rem] overflow-auto overscroll-none">
+      <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 h-[40rem] overflow-auto overscroll-none min-w-[54rem]">
         {skillCard.map((cardItem, cardIndex) => {
           const typeInfo = findCardType(cardItem.type);
           return (
             <div
               key={cardIndex}
-              className="rounded-2xl px-4 h-[10.63rem] m-2 border-solid border-[#E7E8EE] border-[0.06rem] bg-[#ffffff]"
+              className="rounded-2xl h-[10.63rem] px-4 m-2 border-solid border-[#E7E8EE] border-[0.06rem] bg-[#ffffff] min-w-[12rem]"
             >
               <div className="flex justify-between items-center my-3">
                 <div className="font-semibold text-[1rem] text-[#323444]">
