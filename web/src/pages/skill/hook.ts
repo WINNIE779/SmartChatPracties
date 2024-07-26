@@ -9,7 +9,7 @@ export const useAction = () => {
     },
     {
       name: "aaaa",
-      type: "問答類",
+      type: "知識類",
       skillID: "232323",
       createTime: "2099-9-9",
       state: "訓練中",
@@ -72,7 +72,7 @@ export const useAction = () => {
     },
     {
       name: "hao",
-      type: "問答類",
+      type: "知識類",
       skillID: "232323",
       createTime: "2099-9-9",
       state: "訓練中",

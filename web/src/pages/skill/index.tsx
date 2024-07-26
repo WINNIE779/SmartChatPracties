@@ -45,7 +45,7 @@ export const SkilManagement = () => {
 
       <div className="bg-[#ffffff] bg-opacity-80 rounded-2xl flex justify-between my-4 items-center px-6 py-4 min-w-[52rem]">
         <div className="flex justify-center items-center">
-          <span className="text-[#323444]">篩選類型：</span>
+          <span className="text-[#323444] min-w-[6rem]">篩選類型：</span>
           {typeSelect.map((item, index) => {
             return (
               <div
