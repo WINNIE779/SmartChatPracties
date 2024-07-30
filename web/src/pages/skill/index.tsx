@@ -8,13 +8,9 @@ import {
   skillTableIcon,
 } from "../icon/skill";
 
-import { Input, Pagination, Tooltip } from "antd";
+import { Input, Pagination } from "antd";
 import { useAction } from "./hook";
-import {
-  ISkillCardStatus,
-  SkillTextType,
-  SkillType,
-} from "../../services/dtos/intents";
+import { SkillType, skillTypeOption } from "../../services/dtos/intents";
 
 export const SkilManagement = () => {
   const {
@@ -25,32 +21,9 @@ export const SkilManagement = () => {
     setSearchText,
   } = useAction();
 
-  const typeSelect = [
-    {
-      type: SkillTextType[SkillType.QuestionAndAnswerType],
-      icon: <Icon component={skillQAIcon} />,
-      color: "text-[#ED940F]",
-      bgColor: "bg-[#FEF6EB]",
-    },
-    {
-      type: SkillTextType[SkillType.KnowledgeType],
-      icon: <Icon component={skillKnowIcon} />,
-      color: "text-[#5B53FF]",
-      bgColor: "bg-[#EEEEFF]",
-    },
-    {
-      type: SkillTextType[SkillType.TableType],
-      icon: <Icon component={skillTableIcon} />,
-      color: "text-[#3BC659]",
-      bgColor: "bg-[#E9FAF1]",
-    },
-  ];
+  console.log(cardIntentDto.result);
 
-  console.log(getSkillIntentsCard.length);
-
-  const findCardType = (type) => {
-    return typeSelect.find((item) => item.type === type);
-  };
+  console.log();
 
   useEffect(() => {
     getSkillIntentsCard;
@@ -63,14 +36,29 @@ export const SkilManagement = () => {
       <div className="bg-[#ffffff] bg-opacity-80 rounded-2xl flex justify-between my-4 items-center px-6 py-4 min-w-[52rem]">
         <div className="flex justify-center items-center">
           <span className="text-[#323444] min-w-[6rem]">篩選類型：</span>
-          {typeSelect.map((item, index) => {
+          {skillTypeOption.map((item, index) => {
             return (
               <div
                 key={index}
-                className={`flex justify-center items-center rounded-lg w-[5.88rem] h-[2.31rem] text-[0.88rem] mx-1 ${item.bgColor}`}
+                className={`flex justify-center items-center rounded-lg w-[5.88rem] h-[2.31rem] text-[0.88rem] mx-1  ${
+                  cardIntentDto.CollectionType?.includes(item.value) &&
+                  (item.value === SkillType.QuestionAndAnswerType
+                    ? "bg-[#FEF6EB] text-[#ED940F] border-[#FEF6EB]"
+                    : item.value === SkillType.KnowledgeType
+                    ? "bg-[#EEEEFF] text-[#5B53FF] border-[#EEEEFF]"
+                    : "bg-[#E9FAF1] text-[#3BC659] border-[#E9FAF1]")
+                }`}
               >
-                <div>{item.icon}</div>
-                <div className={`mx-1 ${item.color}`}>{item.type}</div>
+                <div className="mr-1">
+                  {item.value === SkillType.QuestionAndAnswerType ? (
+                    <Icon component={skillQAIcon} />
+                  ) : item.value === SkillType.KnowledgeType ? (
+                    <Icon component={skillKnowIcon} />
+                  ) : (
+                    <Icon component={skillTableIcon} />
+                  )}
+                </div>
+                <div>{item.label}</div>
               </div>
             );
           })}
@@ -94,7 +82,6 @@ export const SkilManagement = () => {
 
       <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 h-[40rem] overflow-auto overscroll-none min-w-[54rem]">
         {cardIntentDto.result.map((cardItem, cardIndex) => {
-          const typeInfo = findCardType(cardItem.collectionType);
           return (
             <div
               key={cardIndex}
@@ -105,9 +92,24 @@ export const SkilManagement = () => {
                   {cardItem.name}
                 </div>
                 <div
-                  className={`flex justify-center items-center px-2 py-2 rounded-[1.25rem] ${typeInfo?.bgColor} ${typeInfo?.color}`}
+                  className={`flex justify-center items-center px-2 py-2 rounded-[1.25rem] ${
+                    cardItem.collectionType === SkillType.QuestionAndAnswerType
+                      ? "bg-[#FEF6EB] text-[#ED940F] border-[#FEF6EB]"
+                      : cardItem.collectionType === SkillType.KnowledgeType
+                      ? "bg-[#EEEEFF] text-[#5B53FF] border-[#EEEEFF]"
+                      : "bg-[#E9FAF1] text-[#3BC659] border-[#E9FAF1]"
+                  }`}
                 >
-                  <div className="px-1"> {typeInfo?.icon}</div>
+                  <div className="px-1">
+                    {cardItem.collectionType ===
+                    SkillType.QuestionAndAnswerType ? (
+                      <Icon component={skillQAIcon} />
+                    ) : cardItem.collectionType === SkillType.KnowledgeType ? (
+                      <Icon component={skillKnowIcon} />
+                    ) : (
+                      <Icon component={skillTableIcon} />
+                    )}
+                  </div>
                   <div className="text-[0.88rem] px-1">
                     {cardItem.collectionType}
                   </div>
@@ -119,21 +121,23 @@ export const SkilManagement = () => {
               <div className="text-[#5F6279] text-[0.88rem]">
                 創建時間：{cardItem.createdDate}
               </div>
-              <div
-                className={`flex justify-center items-center w-[4.13rem] rounded-[1.25rem] h-[2rem] text-[0.88rem] my-3 ${
-                  cardStatus === ISkillCardStatus.InTraining
-                    ? "text-[#ED940F] bg-[#FEF6EB]"
-                    : cardStatus === ISkillCardStatus.Completed
-                    ? "text-[#3BC659] bg-[#E9FAF1]"
-                    : cardStatus === ISkillCardStatus.Pending
-                    ? "text-[#50879e] bg-[#57acbb]"
-                    : cardStatus === ISkillCardStatus.Failed
-                    ? "text-[#3BC659] bg-[#E9FAF1]"
-                    : ""
-                }`}
-              >
-                {cardItem.status}
-              </div>
+              {/* {skillCardStatus.map((statusItem, statusIndex) => {
+                <div
+                  className={`flex justify-center items-center w-[4.13rem] rounded-[1.25rem] h-[2rem] text-[0.88rem] my-3 ${
+                    statusItem.value === ISkillCardStatus.InTraining
+                      ? "text-[#ED940F] bg-[#FEF6EB]"
+                      : statusItem.value === ISkillCardStatus.Completed
+                      ? "text-[#3BC659] bg-[#E9FAF1]"
+                      : statusItem.value === ISkillCardStatus.Pending
+                      ? "text-[#50879e] bg-[#57acbb]"
+                      : statusItem.value === ISkillCardStatus.Failed
+                      ? "text-[#ed5855] bg-[#efa9a9]"
+                      : ""
+                  }`}
+                >
+                  {cardItem.status}
+                </div>;
+              })} */}
             </div>
           );
         })}
@@ -151,14 +155,7 @@ export const SkilManagement = () => {
           pageSize={cardIntentDto.PageSize}
           total={cardIntentDto.totalCount}
           className="flex justify-end"
-          onChange={(page, pageSize) =>
-            getSkillIntentsCard(
-              page,
-              pageSize,
-              cardIntentDto.CollectionType,
-              cardIntentDto.Keyword
-            )
-          }
+          onChange={(page, pageSize) => getSkillIntentsCard(page, pageSize)}
         />
       </div>
     </div>

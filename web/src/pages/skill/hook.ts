@@ -43,10 +43,10 @@ export const useAction = () => {
 
   const getSkillIntentsCard = (
     PageIndex: number = cardIntentDto.PageIndex,
-    PageSize: number = cardIntentDto.PageSize,
-    type: SkillType[],
-    searchText: string
+    PageSize: number = cardIntentDto.PageSize
   ) => {
+    console.log(PageIndex, PageSize);
+
     setCardIntentDto((prev) => ({
       ...prev,
       page: PageIndex,
@@ -58,7 +58,11 @@ export const useAction = () => {
       PageIndex,
       PageSize,
       Keyword: searchText ?? "",
-      CollectionType: type,
+      CollectionType: [
+        SkillType.QuestionAndAnswerType,
+        SkillType.KnowledgeType,
+        SkillType.TableType,
+      ],
     })
       .then((res) => {
         setCardIntentDto((prev) => ({
@@ -84,6 +88,10 @@ export const useAction = () => {
       console.log("获取成功", cardIntentDto.result);
     }
   }, [cardIntentDto.result]);
+
+  useEffect(() => {
+    getSkillIntentsCard();
+  }, []);
 
   return {
     cardStatus,

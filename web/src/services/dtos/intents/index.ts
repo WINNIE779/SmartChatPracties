@@ -55,3 +55,21 @@ export const ISkillCardStatusText = {
   [ISkillCardStatus.Completed]: "已完成",
   [ISkillCardStatus.Failed]: "訓練失敗",
 };
+
+export const skillTypeOption: {
+  value: SkillType;
+  label: string;
+}[] = [
+  {
+    value: SkillType.QuestionAndAnswerType,
+    label: SkillTextType[SkillType.QuestionAndAnswerType],
+  },
+  {
+    value: SkillType.KnowledgeType,
+    label: SkillTextType[SkillType.KnowledgeType],
+  },
+  {
+    value: SkillType.TableType,
+    label: SkillTextType[SkillType.TableType],
+  },
+];

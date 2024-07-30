@@ -32,13 +32,7 @@ api.interceptors.response.use(
     if (error.response.status === 401) {
       localStorage.removeItem((window as any).appsettings?.tokenKey);
 
-      message.error(
-        error.response.data.msg ?? "登陸已過期，請重新登錄",
-        1,
-        () => {
-          window.location.href = "";
-        }
-      );
+      message.error(error.response.data.msg ?? "登陸已過期，請重新登錄");
     } else {
       return Promise.reject(error.response.data.msg ?? "Unknown error");
     }
