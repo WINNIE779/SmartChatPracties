@@ -38,6 +38,7 @@ export const useAction = () => {
     type: SkillType[],
     searchValue: string
   ) => {
+    setSearchText(() => searchValue ?? []);
 
     setCardIntentDto((prev) => ({
       ...prev,
