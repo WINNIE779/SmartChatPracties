@@ -6,7 +6,6 @@ export interface IntentsParams extends IPagesDto {
 export interface IntentsDto {
   result: IntentsResultProps[];
   totalCount: number;
-  collectionType: SkillType[];
 }
 
 export interface IPagesDto {
@@ -15,9 +14,9 @@ export interface IPagesDto {
 }
 
 export enum SkillType {
-  QuestionAndAnswerType = 0,
-  KnowledgeType = 1,
-  TableType = 2,
+  QuestionAndAnswerType,
+  KnowledgeType,
+  TableType,
 }
 
 export const SkillTextType = {
@@ -30,16 +29,16 @@ export interface IntentsResultProps {
   id: number;
   chatID: number;
   name: string;
-  description: string;
+  description?: string;
   collectionType: SkillType;
-  createdBy: number;
+  createdBy?: number;
   createdDate: string;
-  lastModifiedBy: number;
-  lastModifiedDate: string;
-  collections: string;
-  trainStatus: number;
-  flowStatus: boolean;
-  status: ISkillCardStatus;
+  lastModifiedBy?: number;
+  lastModifiedDate?: string;
+  collections?: string;
+  trainStatus?: number;
+  flowStatus?: boolean;
+  status?: ISkillCardStatus;
 }
 
 export enum ISkillCardStatus {
@@ -62,14 +61,14 @@ export const skillTypeOption: {
 }[] = [
   {
     value: SkillType.QuestionAndAnswerType,
-    label: SkillTextType[SkillType.QuestionAndAnswerType],
+    label: "問答類",
   },
   {
     value: SkillType.KnowledgeType,
-    label: SkillTextType[SkillType.KnowledgeType],
+    label: "知識類",
   },
   {
     value: SkillType.TableType,
-    label: SkillTextType[SkillType.TableType],
+    label: "表格類",
   },
 ];
