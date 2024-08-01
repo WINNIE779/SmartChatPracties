@@ -5,7 +5,7 @@ import {
   SkillType,
 } from "../../services/dtos/intents";
 
-import { useDebounce, useUpdateEffect } from "ahooks";
+import { useDebounce } from "ahooks";
 import { GetSkillIntentsApi } from "../../services/api/intents";
 import { message } from "antd";
 
@@ -88,16 +88,12 @@ export const useAction = () => {
       cardIntentDto.CollectionType,
       searchValue
     );
-  }, []);
-
-  useUpdateEffect(() => {
-    getSkillIntentsCard(
-      1,
-      cardIntentDto.PageSize,
-      cardIntentDto.CollectionType,
-      searchValue
-    );
-  }, [searchValue, cardIntentDto.CollectionType]);
+  }, [
+    cardIntentDto.PageIndex,
+    cardIntentDto.PageSize,
+    searchValue,
+    cardIntentDto.CollectionType,
+  ]);
 
   return {
     searchText,
