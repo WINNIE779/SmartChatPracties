@@ -13,6 +13,11 @@ export interface IPagesDto {
   PageIndex: number;
 }
 
+export interface ISearchDto {
+  Keyword: string;
+  CollectionType: SkillType[];
+}
+
 export enum SkillType {
   QuestionAndAnswerType,
   KnowledgeType,

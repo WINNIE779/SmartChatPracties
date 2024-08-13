@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 import {
+  IPagesDto,
+  ISearchDto,
   IntentsDto,
   IntentsParams,
   SkillType,
+  skillTypeOption,
 } from "../../services/dtos/intents";
 
-import { useDebounce, useUpdateEffect } from "ahooks";
+import { useDebounce, useDebounceFn, useUpdateEffect } from "ahooks";
 import { GetSkillIntentsApi } from "../../services/api/intents";
 import { message } from "antd";
 
-interface CombinedDto extends IntentsDto, IntentsParams {
+interface CombinedDto extends IntentsDto, ISearchDto, IPagesDto {
   loading: boolean;
 }
 
@@ -30,6 +33,26 @@ export const useAction = () => {
     ],
   });
 
+  const [clickResult, setClickResult] = useState<SkillType[]>([
+    SkillType.QuestionAndAnswerType,
+    if (clickResult.includes(item)) {
+      newClickResult = clickResult.filter(
+        (isClickItem) => isClickItem !== item
+      );
+    } else {
+      newClickResult = [...clickResult, item];
+    }
+
+    setClickResult(newClickResult);
+
+    setCardIntentDto((prevState) => ({
+      ...prevState,
+      CollectionType: newClickResult,
+    }));
+  };
+
+  useEffect(() => {}, [cardIntentDto]);
+
   const searchValue = useDebounce(searchText, { wait: 500 });
 
   const getSkillIntentsCard = (
@@ -42,8 +65,6 @@ export const useAction = () => {
 
     setCardIntentDto((prev) => ({
       ...prev,
-      page: PageIndex,
-      pageSize: PageSize,
       loading: true,
     }));
 
@@ -56,7 +77,7 @@ export const useAction = () => {
       .then((res) => {
         setCardIntentDto((prev) => ({
           ...prev,
-          total: res.totalCount,
+          totalCount: res.totalCount,
           result: res.result,
           PageIndex: PageIndex,
           PageSize: PageSize,
@@ -103,6 +124,11 @@ export const useAction = () => {
     searchText,
     searchValue,
     cardIntentDto,
+    filteredResults,
+    clickResult,
+    handleClick,
+    setClickResult,
+    setFilteredResults,
     getSkillIntentsCard,
     setCardIntentDto,
     setSearchText,

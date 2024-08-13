@@ -1,6 +1,6 @@
 import React from "react";
 
-export const skillQAIcon = () => {
+export const SkillQAIcon = (props: { color?: string }) => {
   return (
     <svg
       width="16"
@@ -20,7 +20,7 @@ export const skillQAIcon = () => {
   );
 };
 
-export const skillKnowIcon = () => {
+export const SkillKnowIcon = (props: { color?: string }) => {
   return (
     <svg
       width="16"
@@ -40,7 +40,7 @@ export const skillKnowIcon = () => {
   );
 };
 
-export const skillTableIcon = () => {
+export const SkillTableIcon = (props: { color?: string }) => {
   return (
     <svg
       width="16"
