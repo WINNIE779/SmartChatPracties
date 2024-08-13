@@ -35,6 +35,14 @@ export const useAction = () => {
 
   const [clickResult, setClickResult] = useState<SkillType[]>([
     SkillType.QuestionAndAnswerType,
+    SkillType.KnowledgeType,
+    SkillType.TableType,
+  ]);
+
+  const [filteredResults, setFilteredResults] = useState(cardIntentDto.result);
+
+  const handleClick = (item: SkillType) => {
+    let newClickResult;
     if (clickResult.includes(item)) {
       newClickResult = clickResult.filter(
         (isClickItem) => isClickItem !== item

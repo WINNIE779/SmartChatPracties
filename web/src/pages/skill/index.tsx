@@ -60,13 +60,13 @@ export const SkilManagement = () => {
                 ) : item.value === SkillType.KnowledgeType ? (
                   <SkillKnowIcon
                     color={`${
-                      clickResult.includes(item.value) ? "#ED940F" : "#5F6279"
+                      clickResult.includes(item.value) ? "#5B53FF" : "#5F6279"
                     }`}
                   />
                 ) : (
                   <SkillTableIcon
                     color={`${
-                      clickResult.includes(item.value) ? "#ED940F" : "#5F6279"
+                      clickResult.includes(item.value) ? "#3BC659" : "#5F6279"
                     }`}
                   />
                 )}
