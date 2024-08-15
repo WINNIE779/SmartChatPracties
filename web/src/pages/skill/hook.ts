@@ -1,14 +1,12 @@
-import { SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   IPagesDto,
   ISearchDto,
   IntentsDto,
-  IntentsParams,
   SkillType,
-  skillTypeOption,
 } from "../../services/dtos/intents";
 
-import { useDebounce, useDebounceFn, useUpdateEffect } from "ahooks";
+import { useDebounce, useUpdateEffect } from "ahooks";
 import { GetSkillIntentsApi } from "../../services/api/intents";
 import { message } from "antd";
 
@@ -33,25 +31,17 @@ export const useAction = () => {
     ],
   });
 
-  const [clickResult, setClickResult] = useState<SkillType[]>([
-    SkillType.QuestionAndAnswerType,
-    SkillType.KnowledgeType,
-    SkillType.TableType,
-  ]);
-
   const [filteredResults, setFilteredResults] = useState(cardIntentDto.result);
 
   const handleClick = (item: SkillType) => {
     let newClickResult;
-    if (clickResult.includes(item)) {
-      newClickResult = clickResult.filter(
+    if (cardIntentDto.CollectionType.includes(item)) {
+      newClickResult = cardIntentDto.CollectionType.filter(
         (isClickItem) => isClickItem !== item
       );
     } else {
-      newClickResult = [...clickResult, item];
+      newClickResult = [...cardIntentDto.CollectionType, item];
     }
-
-    setClickResult(newClickResult);
 
     setCardIntentDto((prevState) => ({
       ...prevState,
@@ -133,9 +123,7 @@ export const useAction = () => {
     searchValue,
     cardIntentDto,
     filteredResults,
-    clickResult,
     handleClick,
-    setClickResult,
     setFilteredResults,
     getSkillIntentsCard,
     setCardIntentDto,

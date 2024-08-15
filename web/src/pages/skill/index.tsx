@@ -20,7 +20,6 @@ export const SkilManagement = () => {
   const {
     searchValue,
     cardIntentDto,
-    clickResult,
     getSkillIntentsCard,
     setSearchText,
     handleClick,
@@ -54,19 +53,25 @@ export const SkilManagement = () => {
                 {item.value === SkillType.QuestionAndAnswerType ? (
                   <SkillQAIcon
                     color={`${
-                      clickResult.includes(item.value) ? "#ED940F" : "#5F6279"
+                      cardIntentDto.CollectionType.includes(item.value)
+                        ? "#ED940F"
+                        : "#5F6279"
                     }`}
                   />
                 ) : item.value === SkillType.KnowledgeType ? (
                   <SkillKnowIcon
                     color={`${
-                      clickResult.includes(item.value) ? "#5B53FF" : "#5F6279"
+                      cardIntentDto.CollectionType.includes(item.value)
+                        ? "#5B53FF"
+                        : "#5F6279"
                     }`}
                   />
                 ) : (
                   <SkillTableIcon
                     color={`${
-                      clickResult.includes(item.value) ? "#3BC659" : "#5F6279"
+                      cardIntentDto.CollectionType.includes(item.value)
+                        ? "#3BC659"
+                        : "#5F6279"
                     }`}
                   />
                 )}
@@ -96,7 +101,9 @@ export const SkilManagement = () => {
       <div className="w-full overflow-auto no-scrollbar box-border p-2">
         <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 h-[40rem] overflow-auto overscroll-none min-w-[54rem]">
           {cardIntentDto.result
-            .filter((cardItem) => clickResult.includes(cardItem.collectionType))
+            .filter((cardItem) =>
+              cardIntentDto.CollectionType.includes(cardItem.collectionType)
+            )
             .map((cardItem, cardIndex) => {
               return (
                 <div
