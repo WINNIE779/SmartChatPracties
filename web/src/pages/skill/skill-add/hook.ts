@@ -71,10 +71,6 @@ export const useAction = () => {
 
   const [knowListData, setKnowListData] = useState<IKnowListProps[]>(tableList);
 
-  const [traningKnowListData, setTraningKnowListData] = useState<
-    IKnowListProps[]
-  >([]);
-
   const [traningKnowList, setTraningKnowList] = useState<IKnowListProps[]>([]);
 
   const [paginationData, setPaginationData] = useState<IPagination>({
@@ -90,6 +86,24 @@ export const useAction = () => {
     traningValue: [],
   });
 
+  const [filteredTableList, setFilteredTableList] =
+    useState<IKnowListProps[]>(tableList);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchValue(value);
+
+    const filtered = tableList.filter(
+      (item) => item.name.includes(value) || item.describe.includes(value)
+    );
+    setFilteredTableList(filtered);
+
+    setPaginationData({
+      ...paginationData,
+      total: filtered.length,
+    });
+  };
+
   const onImport = () => {
     if (checkedItems.length === 0) {
       message.error("請選擇知識庫");
@@ -98,8 +112,6 @@ export const useAction = () => {
     }
 
     setAddMaterial(false);
-
-    setTraningKnowListData(traningKnowList);
 
     setSkillData({
       ...skillData,
@@ -123,7 +135,6 @@ export const useAction = () => {
 
   return {
     addMaterial,
-    traningKnowListData,
     traningKnowList,
     searchValue,
     tableList,
@@ -133,6 +144,9 @@ export const useAction = () => {
     paginationData,
     showAddPop,
     skillData,
+    filteredTableList,
+    handleSearchChange,
+    setFilteredTableList,
     onTraning,
     setSkillData,
     setShowAddpop,
@@ -143,7 +157,6 @@ export const useAction = () => {
     setSearchValue,
     onImport,
     setTraningKnowList,
-    setTraningKnowListData,
     setAddMaterial,
   };
 };

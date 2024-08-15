@@ -48,14 +48,14 @@ const tableColumns: TableProps<IKnowListProps>["columns"] = [
 export const AddSkillPage = () => {
   const {
     addMaterial,
-    traningKnowListData,
     searchValue,
-    knowListData,
     checkedItems,
     knowOptions,
     paginationData,
     showAddPop,
     skillData,
+    filteredTableList,
+    handleSearchChange,
     onTraning,
     setSkillData,
     setShowAddpop,
@@ -68,70 +68,71 @@ export const AddSkillPage = () => {
   } = useAction();
 
   return (
-    <div className="bg-[#f4fafb] h-screen">
-      <div className="text-[#323444] bg-[#fafbfc] mx-5 pt-6">
-        <ArrowLeftOutlined className="text-xl mx-2" />
-        <span className="text-[1.13rem] font-bold">新增技能</span>
-      </div>
-
-      <div className="mt-6 mx-5 h-[44.5rem] bg-[#ffffff] rounded-t-lg py-8 pl-16">
-        <div className="flex space-x-3 my-4">
-          <span className="py-1 text-sm">
-            <span className="text-[#F04E4E]">*</span>技能名稱
-          </span>
-          <Input
-            className="w-[17.5rem] h-[2.5rem]"
-            placeholder="請輸入"
-            value={skillData.name}
-            onChange={(e) => {
-              setSkillData({ ...skillData, name: e.target.value });
-            }}
-          />
+    <div className="h-[100vh] overflow-auto text-[0.875rem]">
+      <div className="p-4 bg-[#F6FBFD] pb-0">
+        <div className="text-[#323444] bg-[#fafbfc] pt-1 pl-6 font-bold pb-6 text-[1.13rem]">
+          <ArrowLeftOutlined className="mx-2" />
+          <span>新增技能</span>
         </div>
+        <div className="mx-5 bg-[#ffffff] rounded-lg py-8 pl-20 h-[80vh]">
+          <div className="flex space-x-3 my-4">
+            <span className="py-1 text-sm min-w-[4rem]">
+              <span className="text-[#F04E4E]">*</span>技能名稱
+            </span>
+            <Input
+              className="w-[17.5rem] h-[2.5rem]"
+              placeholder="請輸入"
+              value={skillData.name}
+              onChange={(e) => {
+                setSkillData({ ...skillData, name: e.target.value });
+              }}
+            />
+          </div>
+          <div className="flex space-x-3 my-4">
+            <span className="py-1 text-sm min-w-[4rem]">
+              <span className="text-[#F04E4E]">*</span>技能類型
+            </span>
+            <Select
+              className="w-[17.5rem] h-[2.5rem]"
+              placeholder="請選擇"
+              allowClear
+              options={skillTypeOption}
+              value={skillData.type}
+              onChange={(e) => {
+                setSkillData({ ...skillData, type: e });
+              }}
+            />
+          </div>
+          <div className="flex space-x-3 my-4">
+            <span className="py-1 text-sm min-w-[4rem]">
+              <span className="text-[#F04E4E]">*</span>訓練素材
+            </span>
+            <div className="flex flex-col">
+              {skillData.traningValue.length > 0 && (
+                <Table
+                  className="mb-2 w-[60vw] traningTable"
+                  scroll={{ y: 320 }}
+                  rowKey={(record) => record.id}
+                  columns={tableColumns}
+                  dataSource={skillData.traningValue}
+                />
+              )}
 
-        <div className="flex space-x-3 my-4">
-          <span className="py-1 text-sm">
-            <span className="text-[#F04E4E]">*</span>技能類型
-          </span>
-          <Select
-            className="w-[17.5rem] h-[2.5rem]"
-            placeholder="請選擇"
-            allowClear
-            options={skillTypeOption}
-            value={skillData.type}
-            onChange={(e) => {
-              setSkillData({ ...skillData, type: e });
-            }}
-          />
-        </div>
-
-        <div className="flex space-x-3 my-4">
-          <span className="py-1 text-sm">
-            <span className="text-[#F04E4E]">*</span>訓練素材
-          </span>
-          <div className="flex flex-col">
-            {traningKnowListData.length > 0 ? (
-              <Table
-                className="mb-4 w-[60vw] traningTable"
-                scroll={{ y: 320 }}
-                rowKey={(record) => record.id}
-                columns={tableColumns}
-                dataSource={traningKnowListData}
-              />
-            ) : (
               <div
-                className="flex justify-center items-center w-[35rem] border-dashed border-[#E7E8EE] border-[0.06rem] py-1"
+                className="flex justify-center items-center border-dashed border-[#E7E8EE] border-[0.06rem] py-1 rounded-sm  min-w-[40vw] cursor-pointer mb-40"
                 onClick={() => setAddMaterial(true)}
               >
                 <AddMaterialIcon />
-                <span className="text-[#9D9FB0] text-[0.75rem]">訓練素材</span>
+                <span className="text-[#9D9FB0] text-[0.75rem] min-w-[4rem]">
+                  訓練素材
+                </span>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-center items-center h-[5rem] bg-[#ffffffe7]">
+      <div className="fixed bottom-0 w-full text-center gap-6 flex justify-center h-[6.5rem] items-center bg-[#F8FAFD]">
         <div
           className="w-24 h-11 border border-solid border-[#5B53FF] flex justify-center items-center rounded-lg text-[#5B53FF] select-none mx-4"
           onClick={() => navigate("/skill")}
@@ -198,6 +199,7 @@ export const AddSkillPage = () => {
             className="w-[20rem]"
             placeholder="通過名稱/ID搜索技能"
             value={searchValue}
+            onChange={handleSearchChange}
             suffix={
               <Tooltip title="搜索">
                 <SearchOutlined />
@@ -217,7 +219,7 @@ export const AddSkillPage = () => {
               scroll={{ y: 400 }}
               rowKey={(record) => record.id}
               columns={tableColumns}
-              dataSource={knowListData}
+              dataSource={filteredTableList}
               loading={paginationData.loading}
               pagination={{
                 position: ["bottomRight"],
