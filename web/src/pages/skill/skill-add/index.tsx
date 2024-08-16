@@ -37,7 +37,7 @@ const tableColumns: TableProps<IKnowListProps>["columns"] = [
     filters: [],
     render: (category) => {
       return (
-        <div className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+        <div className="whitespace-nowrap overflow-hidden text-ellipsis">
           {category}
         </div>
       );
@@ -74,8 +74,8 @@ export const AddSkillPage = () => {
           <ArrowLeftOutlined className="mx-2" />
           <span>新增技能</span>
         </div>
-        <div className="mx-5 bg-[#ffffff] rounded-lg py-8 pl-20 h-[80vh]">
-          <div className="flex space-x-3 my-4">
+        <div className="mx-5 bg-[#ffffff] rounded-lg py-8 pr-6 pl-20 h-[80vh]">
+          <div className="flex space-x-3 my-4 mb-6">
             <span className="py-1 text-sm min-w-[4rem]">
               <span className="text-[#F04E4E]">*</span>技能名稱
             </span>
@@ -88,7 +88,8 @@ export const AddSkillPage = () => {
               }}
             />
           </div>
-          <div className="flex space-x-3 my-4">
+
+          <div className="flex space-x-3 my-4 mb-6">
             <span className="py-1 text-sm min-w-[4rem]">
               <span className="text-[#F04E4E]">*</span>技能類型
             </span>
@@ -103,14 +104,16 @@ export const AddSkillPage = () => {
               }}
             />
           </div>
-          <div className="flex space-x-3 my-4">
+
+          <div className="flex space-x-3 my-4 mb-6">
             <span className="py-1 text-sm min-w-[4rem]">
               <span className="text-[#F04E4E]">*</span>訓練素材
             </span>
             <div className="flex flex-col">
               {skillData.traningValue.length > 0 && (
                 <Table
-                  className="mb-2 w-[60vw] traningTable"
+                  className="mb-2 w-[50vw] traningTable"
+                  style={{}}
                   scroll={{ y: 320 }}
                   rowKey={(record) => record.id}
                   columns={tableColumns}
