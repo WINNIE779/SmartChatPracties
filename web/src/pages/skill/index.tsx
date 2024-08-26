@@ -18,10 +18,9 @@ import {
 
 export const SkilManagement = () => {
   const {
-    searchValue,
     cardIntentDto,
     getSkillIntentsCard,
-    setSearchText,
+    updateGetCardIntents,
     handleClick,
   } = useAction();
 
@@ -85,8 +84,8 @@ export const SkilManagement = () => {
             className="w-64 ml-6"
             placeholder="通過名稱/ID搜索技能"
             suffix={<Icon component={skillSearchIcon} />}
-            value={searchValue}
-            onChange={(e) => setSearchText(e.target.value)}
+            value={cardIntentDto.Keyword}
+            onChange={(e) => updateGetCardIntents("Keyword", e.target.value)}
           />
         </div>
 
@@ -98,8 +97,8 @@ export const SkilManagement = () => {
         </div>
       </div>
 
-      <div className="w-full overflow-auto no-scrollbar box-border p-2">
-        <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 h-[40rem] overflow-auto overscroll-none min-w-[54rem]">
+      <div className="h-[68vh] overflow-auto p-4">
+        <div className="grid md:grid-cols-3 grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {cardIntentDto.result
             .filter((cardItem) =>
               cardIntentDto.CollectionType.includes(cardItem.collectionType)
@@ -108,10 +107,10 @@ export const SkilManagement = () => {
               return (
                 <div
                   key={cardIndex}
-                  className="bg-white bg-opacity-80 flex flex-col rounded-2xl border border-solid border-[#E7E8EE] cursor-pointer relative m-2 p-4 space-y-4 h-[10rem]"
+                  className="bg-[#FFFFFF] rounded-xl p-3 pt-5 border border-solid border-[#E7E8EEFF] h-[8rem] cursor-pointer"
                 >
                   <div className="flex justify-between space-x-2 h-8 items-center">
-                    <div className="font-semibold text-[1rem] text-[#323444] flex flex-wrap">
+                    <div className="font-semibold text-[1rem] text-[#323444]">
                       {cardItem.name}
                     </div>
                     <div
@@ -147,10 +146,10 @@ export const SkilManagement = () => {
                     </div>
                   </div>
 
-                  <div className="text-[#5F6279] text-[0.88rem] py-2">
+                  <div className="text-[#5F6279] text-[0.88rem] pt-6">
                     技能ID：{cardItem.id}
                   </div>
-                  <div className="text-[#5F6279] text-[0.88rem] py-2">
+                  <div className="text-[#5F6279] text-[0.88rem] pt-2">
                     創建時間：{cardItem.createdDate}
                   </div>
                 </div>
@@ -159,7 +158,7 @@ export const SkilManagement = () => {
         </div>
       </div>
 
-      <div className="flex justify-between items-center px-2 my-4">
+      <div className="flex justify-between items-center px-2">
         <span>
           共<span className="text-[#5B53FF]">{cardIntentDto.totalCount}</span>條
         </span>
@@ -176,7 +175,7 @@ export const SkilManagement = () => {
               page,
               pageSize,
               cardIntentDto.CollectionType,
-              searchValue
+              cardIntentDto.Keyword
             )
           }
         />

@@ -6,19 +6,16 @@ import {
   SkillType,
 } from "../../services/dtos/intents";
 
-import { useDebounce, useUpdateEffect } from "ahooks";
+import { useDebounceEffect, useUpdateEffect } from "ahooks";
 import { GetSkillIntentsApi } from "../../services/api/intents";
 import { message } from "antd";
 
-interface CombinedDto extends IntentsDto, ISearchDto, IPagesDto {
-  loading: boolean;
-}
+interface CombinedDto extends IntentsDto, ISearchDto, IPagesDto {}
 
 export const useAction = () => {
   const [searchText, setSearchText] = useState<string>("");
 
   const [cardIntentDto, setCardIntentDto] = useState<CombinedDto>({
-    loading: false,
     PageIndex: 1,
     PageSize: 18,
     Keyword: "",
@@ -30,8 +27,6 @@ export const useAction = () => {
       SkillType.TableType,
     ],
   });
-
-  const [filteredResults, setFilteredResults] = useState(cardIntentDto.result);
 
   const handleClick = (item: SkillType) => {
     let newClickResult;
@@ -49,9 +44,22 @@ export const useAction = () => {
     }));
   };
 
-  useEffect(() => {}, [cardIntentDto]);
+  useDebounceEffect(
+    () => {
+      setSearchText(cardIntentDto.Keyword);
+    },
+    [cardIntentDto.Keyword],
+    {
+      wait: 500,
+    }
+  );
 
-  const searchValue = useDebounce(searchText, { wait: 500 });
+  const updateGetCardIntents = (key: keyof CombinedDto, value: any) => {
+    setCardIntentDto((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
 
   const getSkillIntentsCard = (
     PageIndex: number = cardIntentDto.PageIndex,
@@ -59,11 +67,8 @@ export const useAction = () => {
     type: SkillType[],
     searchValue: string
   ) => {
-    setSearchText(() => searchValue ?? []);
-
     setCardIntentDto((prev) => ({
       ...prev,
-      loading: true,
     }));
 
     GetSkillIntentsApi({
@@ -73,30 +78,18 @@ export const useAction = () => {
       CollectionType: type,
     })
       .then((res) => {
-        setCardIntentDto((prev) => ({
-          ...prev,
-          totalCount: res.totalCount,
-          result: res.result,
-          PageIndex: PageIndex,
-          PageSize: PageSize,
-        }));
+        updateGetCardIntents("totalCount", res.totalCount);
+        updateGetCardIntents("result", res.result);
+        updateGetCardIntents("PageIndex", PageIndex);
+        updateGetCardIntents("PageSize", PageSize);
       })
       .catch(() => {
         message.error("獲取失敗");
 
-        setCardIntentDto((prev) => ({
-          ...prev,
-          totalCount: 0,
-          PageIndex: PageIndex,
-          PageSize: PageSize,
-          result: [],
-        }));
-      })
-      .finally(() => {
-        setCardIntentDto((prev) => ({
-          ...prev,
-          loading: false,
-        }));
+        updateGetCardIntents("totalCount", 0);
+        updateGetCardIntents("result", []);
+        updateGetCardIntents("PageIndex", PageIndex);
+        updateGetCardIntents("PageSize", PageSize);
       });
   };
 
@@ -105,7 +98,7 @@ export const useAction = () => {
       cardIntentDto.PageIndex,
       cardIntentDto.PageSize,
       cardIntentDto.CollectionType,
-      searchValue
+      cardIntentDto.Keyword
     );
   }, []);
 
@@ -114,17 +107,15 @@ export const useAction = () => {
       cardIntentDto.PageIndex,
       cardIntentDto.PageSize,
       cardIntentDto.CollectionType,
-      searchValue
+      cardIntentDto.Keyword
     );
-  }, [searchValue, cardIntentDto.CollectionType]);
+  }, [cardIntentDto.Keyword, cardIntentDto.CollectionType]);
 
   return {
     searchText,
-    searchValue,
     cardIntentDto,
-    filteredResults,
+    updateGetCardIntents,
     handleClick,
-    setFilteredResults,
     getSkillIntentsCard,
     setCardIntentDto,
     setSearchText,
