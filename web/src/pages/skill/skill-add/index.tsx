@@ -69,7 +69,7 @@ export const AddSkillPage = () => {
 
   return (
     <div className="h-[100vh] overflow-hidden text-[0.875rem]">
-      <div className="p-4 bg-[#5cb1d3] pb-0">
+      <div className="p-4 bg-[#f5f5f5] pb-0">
         <div className="text-[#323444] pt-1 pl-6 font-bold pb-6 text-[1.13rem]">
           <ArrowLeftOutlined className="mx-2" />
           <span>新增技能</span>
