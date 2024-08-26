@@ -68,13 +68,13 @@ export const AddSkillPage = () => {
   } = useAction();
 
   return (
-    <div className="h-[100vh] overflow-auto text-[0.875rem]">
-      <div className="p-4 bg-[#F6FBFD] pb-0">
-        <div className="text-[#323444] bg-[#fafbfc] pt-1 pl-6 font-bold pb-6 text-[1.13rem]">
+    <div className="h-[100vh] overflow-hidden text-[0.875rem]">
+      <div className="p-4 bg-[#5cb1d3] pb-0">
+        <div className="text-[#323444] pt-1 pl-6 font-bold pb-6 text-[1.13rem]">
           <ArrowLeftOutlined className="mx-2" />
           <span>新增技能</span>
         </div>
-        <div className="mx-5 bg-[#ffffff] rounded-lg py-8 pr-6 pl-20 h-[80vh]">
+        <div className="mx-5 bg-[#ffffff] rounded-lg py-8 pr-6 pl-20 h-[80vh] overflow-auto">
           <div className="flex space-x-3 my-4 mb-6">
             <span className="py-1 text-sm min-w-[4rem]">
               <span className="text-[#F04E4E]">*</span>技能名稱
@@ -113,7 +113,6 @@ export const AddSkillPage = () => {
               {skillData.traningValue.length > 0 && (
                 <Table
                   className="mb-2 w-[50vw] traningTable"
-                  style={{}}
                   scroll={{ y: 320 }}
                   rowKey={(record) => record.id}
                   columns={tableColumns}
@@ -135,7 +134,7 @@ export const AddSkillPage = () => {
         </div>
       </div>
 
-      <div className="fixed bottom-0 w-full text-center gap-6 flex justify-center h-[6.5rem] items-center bg-[#F8FAFD]">
+      <div className="fixed bottom-0 w-full text-center gap-6 flex justify-center h-[6.5rem] items-center bg-[#F8FAFD] z-50">
         <div
           className="w-24 h-11 border border-solid border-[#5B53FF] flex justify-center items-center rounded-lg text-[#5B53FF] select-none mx-4"
           onClick={() => navigate("/skill")}
