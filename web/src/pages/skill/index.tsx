@@ -22,6 +22,7 @@ export const SkilManagement = () => {
     getSkillIntentsCard,
     updateGetCardIntents,
     handleClick,
+    searchText,
   } = useAction();
 
   return (
@@ -175,7 +176,7 @@ export const SkilManagement = () => {
               page,
               pageSize,
               cardIntentDto.CollectionType,
-              cardIntentDto.Keyword
+              searchText
             )
           }
         />

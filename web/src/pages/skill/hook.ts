@@ -50,7 +50,7 @@ export const useAction = () => {
     },
     [cardIntentDto.Keyword],
     {
-      wait: 500,
+      wait: 1000,
     }
   );
 
@@ -65,7 +65,7 @@ export const useAction = () => {
     PageIndex: number = cardIntentDto.PageIndex,
     PageSize: number = cardIntentDto.PageSize,
     type: SkillType[],
-    searchValue: string
+    searchText: string
   ) => {
     setCardIntentDto((prev) => ({
       ...prev,
@@ -74,7 +74,7 @@ export const useAction = () => {
     GetSkillIntentsApi({
       PageIndex,
       PageSize,
-      Keyword: searchValue ?? "",
+      Keyword: searchText ?? "",
       CollectionType: type,
     })
       .then((res) => {
@@ -104,12 +104,12 @@ export const useAction = () => {
 
   useUpdateEffect(() => {
     getSkillIntentsCard(
-      cardIntentDto.PageIndex,
+      1,
       cardIntentDto.PageSize,
       cardIntentDto.CollectionType,
       cardIntentDto.Keyword
     );
-  }, [cardIntentDto.Keyword, cardIntentDto.CollectionType]);
+  }, [cardIntentDto.CollectionType, searchText]);
 
   return {
     searchText,
