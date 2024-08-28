@@ -107,7 +107,7 @@ export const useAction = () => {
       1,
       cardIntentDto.PageSize,
       cardIntentDto.CollectionType,
-      cardIntentDto.Keyword
+      searchText
     );
   }, [cardIntentDto.CollectionType, searchText]);
 
