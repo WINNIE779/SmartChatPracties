@@ -2,42 +2,28 @@ import React from "react";
 import Icon from "@ant-design/icons";
 import {
   addSkillIcon,
-  skillKnowIcon,
-  skillQAIcon,
+  SkillKnowIcon,
+  SkillQAIcon,
   skillSearchIcon,
-  skillTableIcon,
+  SkillTableIcon,
 } from "../icon/skill";
 
-import { Pagination } from "antd";
+import { Input, Pagination } from "antd";
 import { useAction } from "./hook";
+import {
+  SkillTextType,
+  SkillType,
+  skillTypeOption,
+} from "../../services/dtos/intents";
 
 export const SkilManagement = () => {
-  const { skillCard, onChange } = useAction();
-
-  const typeSelect = [
-    {
-      type: "問答類",
-      icon: <Icon component={skillQAIcon} />,
-      color: "text-[#ED940F]",
-      bgColor: "bg-[#FEF6EB]",
-    },
-    {
-      type: "知識類",
-      icon: <Icon component={skillKnowIcon} />,
-      color: "text-[#5B53FF]",
-      bgColor: "bg-[#EEEEFF]",
-    },
-    {
-      type: "表格類",
-      icon: <Icon component={skillTableIcon} />,
-      color: "text-[#3BC659]",
-      bgColor: "bg-[#E9FAF1]",
-    },
-  ];
-
-  const findCardType = (type) => {
-    return typeSelect.find((item) => item.type === type);
-  };
+  const {
+    cardIntentDto,
+    getSkillIntentsCard,
+    updateGetCardIntents,
+    handleClick,
+    searchText,
+  } = useAction();
 
   return (
     <div className="bg-[#efeeee] bg-opacity-50 px-4 h-screen overflow-auto overscroll-none md:flex-col">
@@ -46,22 +32,64 @@ export const SkilManagement = () => {
       <div className="bg-[#ffffff] bg-opacity-80 rounded-2xl flex justify-between my-4 items-center px-6 py-4 min-w-[52rem]">
         <div className="flex justify-center items-center">
           <span className="text-[#323444] min-w-[6rem]">篩選類型：</span>
-          {typeSelect.map((item, index) => {
+          {skillTypeOption.map((item, index) => {
             return (
               <div
                 key={index}
-                className={`flex justify-center items-center rounded-lg w-[5.88rem] h-[2.31rem] text-[0.88rem] mx-1 ${item.bgColor}`}
+                className={`w-[5.5rem] border border-solid border-[#E7E8EE] rounded-lg flex items-center justify-center space-x-1 py-1 ml-2 cursor-pointer 
+                ${
+                  cardIntentDto.CollectionType?.includes(item.value)
+                    ? item.value === SkillType.QuestionAndAnswerType
+                      ? "bg-[#FEF6EB] text-[#ED940F] border-[#FEF6EB]"
+                      : item.value === SkillType.KnowledgeType
+                      ? "bg-[#EEEEFF] text-[#5B53FF] border-[#EEEEFF]"
+                      : "bg-[#E9FAF1] text-[#3BC659] border-[#E9FAF1]"
+                    : ""
+                }`}
+                onClick={() => {
+                  handleClick(item.value);
+                }}
               >
-                <div>{item.icon}</div>
-                <div className={`mx-1 ${item.color}`}>{item.type}</div>
+                {item.value === SkillType.QuestionAndAnswerType ? (
+                  <SkillQAIcon
+                    color={`${
+                      cardIntentDto.CollectionType.includes(item.value)
+                        ? "#ED940F"
+                        : "#5F6279"
+                    }`}
+                  />
+                ) : item.value === SkillType.KnowledgeType ? (
+                  <SkillKnowIcon
+                    color={`${
+                      cardIntentDto.CollectionType.includes(item.value)
+                        ? "#5B53FF"
+                        : "#5F6279"
+                    }`}
+                  />
+                ) : (
+                  <SkillTableIcon
+                    color={`${
+                      cardIntentDto.CollectionType.includes(item.value)
+                        ? "#3BC659"
+                        : "#5F6279"
+                    }`}
+                  />
+                )}
+
+                <div>{item.label}</div>
               </div>
             );
           })}
-          <div className="rounded-lg border-[0.06rem] border-solid border-[#E7E8EE] w-[17.5rem] h-[2.5rem] flex items-center px-2 mx-4 justify-between text-[#9D9FB0] text-[0.88rem]">
-            通過名稱/ID搜索技能
-            <Icon component={skillSearchIcon} />
-          </div>
+
+          <Input
+            className="w-64 ml-6"
+            placeholder="通過名稱/ID搜索技能"
+            suffix={<Icon component={skillSearchIcon} />}
+            value={cardIntentDto.Keyword}
+            onChange={(e) => updateGetCardIntents("Keyword", e.target.value)}
+          />
         </div>
+
         <div className="rounded-lg px-0.5 h-[2.9rem] flex justify-center items-center bg-gradient-to-r from-[#23D2FF] via-[#5B53FF] via-[#AA56FF] to-[#FFCE21] cursor-pointer">
           <div className="bg-[#ffffff] text-[#5B53FF] text-[0.88rem] w-[7.25rem] h-[2.75rem] flex items-center justify-center rounded-lg">
             <Icon component={addSkillIcon} className="px-1" />
@@ -70,56 +98,87 @@ export const SkilManagement = () => {
         </div>
       </div>
 
-      <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 h-[40rem] overflow-auto overscroll-none min-w-[54rem]">
-        {skillCard.map((cardItem, cardIndex) => {
-          const typeInfo = findCardType(cardItem.type);
-          return (
-            <div
-              key={cardIndex}
-              className="rounded-2xl h-[10.63rem] px-4 m-2 border-solid border-[#E7E8EE] border-[0.06rem] bg-[#ffffff] min-w-[12rem]"
-            >
-              <div className="flex justify-between items-center my-3">
-                <div className="font-semibold text-[1rem] text-[#323444]">
-                  {cardItem.name}
-                </div>
+      <div className="h-[68vh] overflow-auto p-4">
+        <div className="grid md:grid-cols-3 grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          {cardIntentDto.result
+            .filter((cardItem) =>
+              cardIntentDto.CollectionType.includes(cardItem.collectionType)
+            )
+            .map((cardItem, cardIndex) => {
+              return (
                 <div
-                  className={`flex justify-center items-center px-2 py-2 rounded-[1.25rem] ${typeInfo?.bgColor} ${typeInfo?.color}`}
+                  key={cardIndex}
+                  className="bg-[#FFFFFF] rounded-xl p-3 pt-5 border border-solid border-[#E7E8EEFF] h-[8rem] cursor-pointer"
                 >
-                  <div className="px-1"> {typeInfo?.icon}</div>
-                  <div className="text-[0.88rem] px-1"> {cardItem.type}</div>
+                  <div className="flex justify-between space-x-2 h-8 items-center">
+                    <div className="font-semibold text-[1rem] text-[#323444]">
+                      {cardItem.name}
+                    </div>
+                    <div
+                      className={`flex justify-center items-center px-2 py-2 ml-1 rounded-[1.25rem] min-w-[5rem] ${
+                        cardItem.collectionType ===
+                        SkillType.QuestionAndAnswerType
+                          ? "bg-[#FEF6EB] text-[#ED940F] border-[#FEF6EB]"
+                          : cardItem.collectionType === SkillType.KnowledgeType
+                          ? "bg-[#EEEEFF] text-[#5B53FF] border-[#EEEEFF]"
+                          : "bg-[#E9FAF1] text-[#3BC659] border-[#E9FAF1]"
+                      }`}
+                    >
+                      <div className="px-1">
+                        {cardItem.collectionType ===
+                        SkillType.QuestionAndAnswerType ? (
+                          <SkillQAIcon color={"#ED940F"} />
+                        ) : cardItem.collectionType ===
+                          SkillType.KnowledgeType ? (
+                          <SkillKnowIcon />
+                        ) : (
+                          <SkillTableIcon />
+                        )}
+                      </div>
+
+                      <div className="text-[0.88rem] px-1">
+                        {cardItem.collectionType ===
+                        SkillType.QuestionAndAnswerType
+                          ? SkillTextType[SkillType.QuestionAndAnswerType]
+                          : cardItem.collectionType === SkillType.KnowledgeType
+                          ? SkillTextType[SkillType.KnowledgeType]
+                          : SkillTextType[SkillType.TableType]}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-[#5F6279] text-[0.88rem] pt-6">
+                    技能ID：{cardItem.id}
+                  </div>
+                  <div className="text-[#5F6279] text-[0.88rem] pt-2">
+                    創建時間：{cardItem.createdDate}
+                  </div>
                 </div>
-              </div>
-              <div className="text-[#5F6279] text-[0.88rem] my-3">
-                技能ID：{cardItem.skillID}
-              </div>
-              <div className="text-[#5F6279] text-[0.88rem]">
-                創建時間：{cardItem.createTime}
-              </div>
-              <div
-                className={`flex justify-center items-center w-[4.13rem] rounded-[1.25rem] h-[2rem] text-[0.88rem] my-3 ${
-                  cardItem.state === "訓練中"
-                    ? "text-[#ED940F] bg-[#FEF6EB]"
-                    : "text-[#3BC659] bg-[#E9FAF1]"
-                }`}
-              >
-                {cardItem.state}
-              </div>
-            </div>
-          );
-        })}
+              );
+            })}
+        </div>
       </div>
 
-      <div className="flex justify-between items-center px-2 my-4">
+      <div className="flex justify-between items-center px-2">
         <span>
-          共<span className="text-[#5B53FF]">200</span>條
+          共<span className="text-[#5B53FF]">{cardIntentDto.totalCount}</span>條
         </span>
         <Pagination
           showQuickJumper
           showSizeChanger
           defaultCurrent={1}
-          total={200}
+          current={cardIntentDto.PageIndex}
+          pageSize={cardIntentDto.PageSize}
+          total={cardIntentDto.totalCount}
           className="flex justify-end"
-          onChange={onChange}
+          onChange={(page, pageSize) =>
+            getSkillIntentsCard(
+              page,
+              pageSize,
+              cardIntentDto.CollectionType,
+              searchText
+            )
+          }
         />
       </div>
     </div>
