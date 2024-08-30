@@ -5,8 +5,19 @@ import loginIcon from "../../asset/pic/login-Icon.png";
 import nameIcon from "../../asset/pic/name.png";
 import passwordIcon from "../../asset/pic/password.png";
 import { Button, Checkbox, Input } from "antd";
+import { useAction } from "./hook";
 
 export const LoginPage = () => {
+  const {
+    userName,
+    password,
+    isRemember,
+    setIsRemember,
+    setPassword,
+    setUserName,
+    onLogin,
+  } = useAction();
+
   return (
     <div
       className="bg-[#ffffff] flex justify-end md:justify-normal overflow-hidden bg-current h-screen w-screen"
@@ -47,6 +58,8 @@ export const LoginPage = () => {
               />
             }
             className="p-1 lg:p-5 lg:w-[31.88rem] mt-6 rounded-[1rem] bg-[#FAFAFB] border-none text-[1.05rem]"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
           />
           <Input.Password
             placeholder="密碼"
@@ -57,13 +70,19 @@ export const LoginPage = () => {
               />
             }
             className="p-1 lg:p-5 lg:w-[31.88rem] mt-[1.5rem] rounded-[1rem] bg-[#FAFAFB] border-none text-[1.05rem]"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
-          <Checkbox className="lg:mt-6 lg:mb-6 mt-2 mb-2 text-[0.88rem]">
+          <Checkbox
+            className="lg:mt-6 lg:mb-6 mt-2 mb-2 text-[0.88rem]"
+            onChange={() => setIsRemember(true)}
+          >
             記住密碼
           </Checkbox>
           <Button
             type="primary"
             className="bg-gradient-to-r from-[#8053ff] to-[#5b53ff] rounded-[1rem] flex items-center justify-center p-0 lg:p-8 lg:w-[31.88rem] cursor-pointer"
+            onClick={onLogin}
           >
             <span className="text-[1rem] lg:text-[1.25rem] text-white">
               登錄
