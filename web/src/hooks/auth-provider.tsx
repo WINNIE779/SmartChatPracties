@@ -1,3 +1,5 @@
+import React from "react";
+
 import { GetSkillIntentsApi } from "@/services/api/intents";
 import { useMemoizedFn, useUpdateEffect } from "ahooks";
 import { App } from "antd";
@@ -15,10 +17,6 @@ export interface IProps {
 export const AuthContext = createContext<IProps>(null!);
 
 export const AuthProvider = (props: { children: React.ReactNode }) => {
-  const navigate = useNavigate();
-
-  const { message } = App.useApp();
-
   const tokenKey = (window as any).appsettings?.tokenKey;
 
   const [userName, setUserName] = useState<string>(

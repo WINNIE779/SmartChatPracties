@@ -16,7 +16,7 @@ import {
   skillTypeOption,
 } from "../../services/dtos/intents";
 
-export const SkilManagement = () => {
+export const SkillManagement = () => {
   const {
     cardIntentDto,
     getSkillIntentsCard,

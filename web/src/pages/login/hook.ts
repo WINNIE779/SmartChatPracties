@@ -1,10 +1,10 @@
+import { useAuth } from "@/hooks/use-auth";
 import { PostLogin } from "@/services/api/login";
 import { IPostLoginType } from "@/services/dtos/login";
 import { useDebounceFn } from "ahooks";
-import { App, message } from "antd";
-import { useState } from "react";
+import { App } from "antd";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-// import { useAuth } from "../../hook/auth-provider";
 
 export const useAction = () => {
   const { message } = App.useApp();
@@ -13,7 +13,7 @@ export const useAction = () => {
 
   const { state: historyState } = useLocation();
 
-  // const { signIn } = useAuth();
+  const { signIn } = useAuth();
 
   const [userName, setUserName] = useState<string>("");
 
@@ -23,22 +23,25 @@ export const useAction = () => {
 
   const [loading, setLoading] = useState<boolean>(false);
 
+  const historyCallback = () => {
+    historyState?.from?.pathname
+      ? navigate(historyState.from.pathname, { replace: true })
+      : navigate("/skill", { replace: true });
+  };
+
   const { run: onLogin } = useDebounceFn(
     (value: IPostLoginType) => {
-      if (!userName || !password) {
-        message.info("账号密码不为空！");
-        return;
-      }
+      setLoading(true);
 
-      PostLogin(value)
+      PostLogin({ userName: userName, password: password })
         .then((res) => {
           message.success("登录成功");
 
-          // signIn(res, value.userName);
+          signIn(res, value.userName, historyCallback);
         })
 
-        .catch((error) => {
-          message.error(error.msg);
+        .catch((err) => {
+          message.error(err.msg);
         })
 
         .finally(() => setLoading(false));
@@ -46,13 +49,34 @@ export const useAction = () => {
     { wait: 300 }
   );
 
+  useEffect(() => {
+    const tokenKey = (window as any).appsettings.tokenKey ?? "";
+
+    const token = localStorage.getItem(tokenKey);
+
+    if (token) {
+      signIn(
+        token,
+        localStorage.getItem("userName") ?? "",
+
+        historyCallback
+      );
+    }
+  }, []);
+
   return {
+    message,
     userName,
     password,
     isRemember,
+    loading,
+    onLogin,
+    historyState,
+    signIn,
+    navigate,
+    setLoading,
     setIsRemember,
     setPassword,
     setUserName,
-    onLogin,
   };
 };

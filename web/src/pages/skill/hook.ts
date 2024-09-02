@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   IPagesDto,
   ISearchDto,
@@ -6,13 +6,17 @@ import {
   SkillType,
 } from "../../services/dtos/intents";
 
-import { useDebounceEffect, useUpdateEffect } from "ahooks";
+import { useDebounceEffect, useDebounceFn, useUpdateEffect } from "ahooks";
 import { GetSkillIntentsApi } from "../../services/api/intents";
 import { message } from "antd";
+import { useNavigate } from "react-router-dom";
+import { any } from "ramda";
 
 interface CombinedDto extends IntentsDto, ISearchDto, IPagesDto {}
 
 export const useAction = () => {
+  const navigate = useNavigate();
+
   const [searchText, setSearchText] = useState<string>("");
 
   const [cardIntentDto, setCardIntentDto] = useState<CombinedDto>({
@@ -114,6 +118,7 @@ export const useAction = () => {
   return {
     searchText,
     cardIntentDto,
+    navigate,
     updateGetCardIntents,
     handleClick,
     getSkillIntentsCard,
