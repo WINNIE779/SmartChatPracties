@@ -30,7 +30,7 @@ export const useAction = () => {
   };
 
   const { run: onLogin } = useDebounceFn(
-    (value: IPostLoginType) => {
+    () => {
       if (!userName || !password) {
         message.info("帳號密碼不能為空");
         return;
@@ -41,7 +41,7 @@ export const useAction = () => {
         .then((res) => {
           message.success("登录成功");
 
-          signIn(res, value.userName, historyCallback);
+          signIn(res, userName, historyCallback);
         })
 
         .catch((err) => {
