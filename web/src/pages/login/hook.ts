@@ -31,6 +31,10 @@ export const useAction = () => {
 
   const { run: onLogin } = useDebounceFn(
     (value: IPostLoginType) => {
+      if (!userName || !password) {
+        message.info("帳號密碼不能為空");
+        return;
+      }
       setLoading(true);
 
       PostLogin({ userName: userName, password: password })
@@ -55,12 +59,7 @@ export const useAction = () => {
     const token = localStorage.getItem(tokenKey);
 
     if (token) {
-      signIn(
-        token,
-        localStorage.getItem("userName") ?? "",
-
-        historyCallback
-      );
+      signIn(token, localStorage.getItem("userName") ?? "", historyCallback);
     }
   }, []);
 

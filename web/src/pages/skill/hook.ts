@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   IPagesDto,
   ISearchDto,
@@ -6,11 +6,10 @@ import {
   SkillType,
 } from "../../services/dtos/intents";
 
-import { useDebounceEffect, useDebounceFn, useUpdateEffect } from "ahooks";
+import { useDebounceEffect, useUpdateEffect } from "ahooks";
 import { GetSkillIntentsApi } from "../../services/api/intents";
 import { message } from "antd";
 import { useNavigate } from "react-router-dom";
-import { any } from "ramda";
 
 interface CombinedDto extends IntentsDto, ISearchDto, IPagesDto {}
 

@@ -56,7 +56,6 @@ export const Router = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route element={<SkillManagement />}>
         <>
-          <Route path="/skill" element={<Navigate to="/skill" />} />
           {routerList.map((item, index) => {
             return (
               <Route
