@@ -4,6 +4,7 @@ import { App as AppWrapper, ConfigProvider } from "antd";
 import { useAction } from "./AppHook";
 import React from "react";
 import { Router } from "./router";
+import { AuthProvider } from "./hooks/auth-provider";
 
 export const App = () => {
   const { isLoaded } = useAction();
@@ -14,7 +15,9 @@ export const App = () => {
       theme={{ token: { colorPrimary: "#5B53FF", colorText: "#323444" } }}
     >
       <AppWrapper>
-        <Router />
+        <AuthProvider>
+          <Router />
+        </AuthProvider>
       </AppWrapper>
     </ConfigProvider>
   ) : (

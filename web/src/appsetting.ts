@@ -1,4 +1,4 @@
-export interface AppSettings {
+export interface IAppSettings {
   serverUrl: string;
   tokenKey: string;
 }
@@ -12,9 +12,9 @@ export const InitialAppSetting = async () => {
     headers: { "Content-Type": "application/json", Accept: "application/json" },
   })
     .then((res) => res.json())
-    .then((res: AppSettings) => {
+    .then((res: IAppSettings) => {
       (window as any).appsettings = res;
     });
 };
 
-export default settings as AppSettings;
+export default settings as IAppSettings;
