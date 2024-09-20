@@ -47,8 +47,8 @@ export const UploadFile = () => {
   } = useAction();
 
   return (
-    <div className="flex box-border h-screen px-4 min-h-[35rem] bg-[#F8F8F8] min-w-[80rem]">
-      <div className="w-3/4 flex flex-col justify-between flex-1 py-8">
+    <div className="flex box-border h-screen px-4 py-4 min-h-[34rem] bg-[#F8F8F8] w-full min-w-[75rem] justify-between">
+      <div className="w-3/4 flex flex-col justify-between flex-1 h-[55rem]">
         {uploadList.length > 0 ? (
           <div className="bg-[#031212] h-[5.25rem] w-full relative rounded-xl min-h-[5rem]">
             <div className="absolute left-[3rem] top-[1rem] p-2 text-white text-[1.5rem] font-semibold">
@@ -153,7 +153,7 @@ export const UploadFile = () => {
             )}
           </div>
 
-          <div className="bg-[#F8F8F8] rounded-2xl flex justify-between items-center mt-4 p-4">
+          <div className="bg-[#F8F8F8] rounded-2xl flex justify-between items-center mt-2 p-4">
             <div className="flex">
               {uploadList.map((uploadListItem, uploadIndex) => (
                 //简缩图
@@ -162,7 +162,7 @@ export const UploadFile = () => {
                     className={`cursor-pointer h-[6.25rem] w-[6.25rem] rounded-lg border-2 border-solid relative border-[#7C67FF]`}
                   >
                     {uploadListItem.type === "application/pdf" ? (
-                      <div className="relative cursor-pointer flex justify-center items-center rounded-lg">
+                      <div className="relative cursor-pointer flex justify-center items-center rounded-lg overflow-auto">
                         <iframe
                           src={pdfFileUrl(uploadListItem.url)}
                           scrolling="auto"
@@ -188,7 +188,7 @@ export const UploadFile = () => {
                         height={100}
                         src={uploadListItem.url}
                         preview={false}
-                        className={`cursor-pointer h-[6.2rem] w-[6.2rem] rounded-lg absolute`}
+                        className={`cursor-pointer  w-[6.2rem] rounded-lg absolute`}
                         onClick={() => {
                           if (uploadList.length !== 0) {
                             setFileReview({
@@ -261,35 +261,28 @@ export const UploadFile = () => {
         </div>
       </div>
 
-      <div className="w-1/4 bg-white ml-6 my-4 rounded-lg flex flex-col">
+      <div className="w-1/4 bg-white ml-6 rounded-lg flex flex-col h-[55rem]">
         {!questionFeedback ? (
           <div>
-            <div className="bg-[#F8F8F8] mx-3 py-1 mt-4 rounded-xl flex min-w-[15rem] justify-between">
-              {resultTab.map((topItem, topIndex) => {
-                // 顶部参数选择
-                return (
-                  <div key={topIndex}>
-                    {topItem.isCheck === false && (
-                      <div
-                        className={selectItemCss(
-                          selectedValue === topItem.value,
-                          topItem.isCheck
-                        )}
-                        onClick={() => setSelectedValue(topItem.value)}
-                      >
-                        {topItem.label}
-                      </div>
-                    )}
+            <div className="bg-[#F8F8F8] mt-4 rounded-xl mx-4 box-border flex h-[2.25rem] text-nowrap">
+              {resultTab
+                .filter((topItem) => !topItem.isCheck) // 过滤掉 isCheck 为 true 的项
+                .map((topItem, topIndex) => (
+                  <div
+                    key={topIndex}
+                    className={selectItemCss(selectedValue === topItem.value)}
+                    onClick={() => setSelectedValue(topItem.value)}
+                  >
+                    {topItem.label}
                   </div>
-                );
-              })}
+                ))}
             </div>
 
             {isStartTest && uploadList.length > 0 ? (
               <div className="bg-[#ffffff] flex m-4">
                 {selectedValue === IResultType.Request ? (
                   //請求參數
-                  <div className="flex flex-col overflow-auto h-[50rem] w-full">
+                  <div className="flex flex-col overflow-auto h-[48rem] w-full">
                     {achParameter.map((paramter, paramterIndex) => {
                       return (
                         <div
@@ -315,7 +308,7 @@ export const UploadFile = () => {
                   </div>
                 ) : selectedValue === IResultType.Check ? (
                   // 核對結果
-                  <div className="flex flex-col overflow-auto h-[50rem] w-full">
+                  <div className="flex flex-col overflow-auto h-[48rem] w-full">
                     {isAllNormal ? (
                       <div className="bg-[#EBF9F3] font-semibold text-[1rem] w-full py-2 flex justify-center">
                         核對結果
@@ -368,7 +361,7 @@ export const UploadFile = () => {
                   </div>
                 ) : (
                   //識別結果
-                  <div className="flex flex-col overflow-auto h-[50rem] w-full">
+                  <div className="flex flex-col overflow-auto h-[48rem] w-full">
                     {achParameter.map((paramItem, paramIndex) => {
                       return (
                         <div>

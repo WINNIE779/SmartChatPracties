@@ -140,14 +140,13 @@ export const useAction = () => {
     },
   ];
 
-  const selectItemCss = (isTrue: boolean, isCheck: boolean) => {
+  const selectItemCss = (isTrue: boolean) => {
     return `${
       isTrue
-        ? "bg-gradient-to-r from-[#48A7FF] to-[#796DFF] text-white "
+        ? "bg-gradient-to-r from-[#48A7FF] to-[#796DFF] text-white"
         : "text-[#323444]"
-    } ${
-      !isCheck ? "flex-1" : "w-20 inline-block"
-    } box-border py-2 px-9 rounded-xl text-center cursor-pointer select-none text-sm`;
+    } 
+      flex-1 box-border py-2 rounded-xl text-center cursor-pointer text-sm`;
   };
 
   const [selectedValue, setSelectedValue] = useState<IResultType>(
@@ -255,7 +254,6 @@ export const useAction = () => {
 
       if (iframeRef.current) {
         iframeRef.current.src = url; // 设置 Blob URL 到 iframe
-        console.log(fileReview);
       }
 
       return () => {
