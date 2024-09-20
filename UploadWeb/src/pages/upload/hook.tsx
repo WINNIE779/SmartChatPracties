@@ -1,25 +1,13 @@
 import { useUpdateEffect } from "ahooks";
 import { useRef, useState } from "react";
-
-export enum IResultType {
-  Identify,
-  Check,
-  Request,
-  Question,
-}
-
-export interface IUploadList {
-  id: number;
-  url: string;
-  type: string;
-}
+import { IResultType, IUploadList } from "./prop";
 
 export const useAction = () => {
   const achParameter = [
     {
       name: "授權人",
       remarks: "（必填，僅英文）",
-      status: "異常",
+      status: "正常",
       item: "Herry.w",
     },
     {
@@ -102,16 +90,6 @@ export const useAction = () => {
     },
   ];
 
-  const selectItemCss = (isTrue: boolean, isCheck: boolean) => {
-    return `${
-      isTrue
-        ? "bg-gradient-to-r from-[#48A7FF] to-[#796DFF] text-white "
-        : "text-[#323444]"
-    } ${
-      !isCheck ? "flex-1" : "w-32 inline-block"
-    } box-border py-2 px-8 rounded-2xl text-center cursor-pointer select-none text-sm`;
-  };
-
   const resultTab = [
     {
       label: "識別結果",
@@ -162,6 +140,16 @@ export const useAction = () => {
     },
   ];
 
+  const selectItemCss = (isTrue: boolean, isCheck: boolean) => {
+    return `${
+      isTrue
+        ? "bg-gradient-to-r from-[#48A7FF] to-[#796DFF] text-white "
+        : "text-[#323444]"
+    } ${
+      !isCheck ? "flex-1" : "w-20 inline-block"
+    } box-border py-2 px-9 rounded-xl text-center cursor-pointer select-none text-sm`;
+  };
+
   const [selectedValue, setSelectedValue] = useState<IResultType>(
     IResultType.Identify
   );
@@ -179,9 +167,13 @@ export const useAction = () => {
 
   const [questionFeedback, setQuestionFeedback] = useState<boolean>(false);
 
+  const [isStartTest, setIsStartTest] = useState<boolean>(false);
+
   const [selectQuestionType, setSelectQuestionType] = useState<string | null>(
     null
   );
+
+  const [scale, setScale] = useState(1);
 
   const isAllNormal = achParameter.every((param) => param.status === "正常");
 
@@ -243,9 +235,21 @@ export const useAction = () => {
     });
   };
 
+  const handleZoomIn = () => {
+    setScale((prev) => Math.min(prev + 0.1, 3)); //最大放大3倍
+  };
+
+  const handleZoomOut = () => {
+    setScale((prev) => Math.max(prev - 0.1, 0.5)); //最小缩小0.5倍
+  };
+
+  const handleBackToParams = () => {
+    setQuestionFeedback(false);
+  };
+
   useUpdateEffect(() => {
     if (fileReview?.fileType === "application/pdf") {
-      // 将 ArrayBuffer 转换为 Blob
+      // 處理pdf文件上傳，将 ArrayBuffer 转换为 Blob
       const blob = new Blob([fileReview.fileUrl], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
 
@@ -269,6 +273,13 @@ export const useAction = () => {
     });
   }, [uploadList]);
 
+  const pdfFileUrl = (fileUrl: any) => {
+    const blob = new Blob([fileUrl], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+
+    return url;
+  };
+
   return {
     resultTab,
     achParameter,
@@ -283,6 +294,14 @@ export const useAction = () => {
     questionFeedback,
     questionType,
     selectQuestionType,
+    isStartTest,
+    scale,
+    handleBackToParams,
+    handleZoomOut,
+    handleZoomIn,
+    setScale,
+    setIsStartTest,
+    pdfFileUrl,
     setSelectQuestionType,
     setQuestionFeedback,
     setShowAbnormal,
@@ -296,3 +315,4 @@ export const useAction = () => {
     handleRemoveFile,
   };
 };
+export { IResultType };

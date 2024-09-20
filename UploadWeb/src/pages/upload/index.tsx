@@ -5,16 +5,16 @@ import {
   abnormalIcon,
   arrowIcon,
   deleteIcon,
+  enlargeIcon,
+  narrowIcon,
   normalIcon,
 } from "@/icon/index";
-import { Button, Input, Image, Radio, Switch } from "antd";
-import React, { useEffect, useState } from "react";
+import { Button, Image, Radio, Switch } from "antd";
 import { IResultType, useAction } from "./hook";
 import Dropzone from "react-dropzone";
 import Icon from "@ant-design/icons";
-import { type } from "os";
-import { log } from "console";
 import TextArea from "antd/es/input/TextArea";
+import React from "react";
 
 export const UploadFile = () => {
   const {
@@ -28,6 +28,14 @@ export const UploadFile = () => {
     filterParams,
     questionFeedback,
     selectQuestionType,
+    questionType,
+    isStartTest,
+    scale,
+    handleBackToParams,
+    handleZoomOut,
+    handleZoomIn,
+    setIsStartTest,
+    pdfFileUrl,
     setSelectQuestionType,
     setQuestionFeedback,
     setShowAbnormal,
@@ -36,19 +44,7 @@ export const UploadFile = () => {
     selectItemCss,
     handleUploadFile,
     handleRemoveFile,
-    questionType,
   } = useAction();
-
-  useEffect(() => {
-    console.log(fileReview);
-  }, [fileReview]);
-
-  const fun = (fileUrl: any) => {
-    const blob = new Blob([fileUrl], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-
-    return url;
-  };
 
   return (
     <div className="flex box-border h-screen px-4 min-h-[35rem] bg-[#F8F8F8] min-w-[80rem]">
@@ -81,22 +77,43 @@ export const UploadFile = () => {
         <div className="bg-[#ffffff] rounded-2xl p-4 flex flex-col h-5/6 mt-4">
           <div className="flex justify-center h-full overflow-auto relative">
             {fileReview && uploadList.length > 0 ? (
-              // 预览
-              <div>
-                {fileReview.fileType === "application/pdf" ? (
-                  <iframe
-                    ref={iframeRef}
-                    scrolling="auto"
-                    className="border-none overflow-hidden"
-                    width="500px"
-                    height="600px"
+              // 文件预览
+              <div className="relative">
+                <div className="bg-[#ffffff] w-full flex justify-center h-full">
+                  {fileReview.fileType === "application/pdf" ? (
+                    <iframe
+                      ref={iframeRef}
+                      scrolling="auto"
+                      className="border-none overflow-auto"
+                      width="500px"
+                      height="600px"
+                      style={{
+                        transform: `scale(${scale})`,
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={fileReview.fileUrl}
+                      className="rounded-lg select-none overflow-auto max-w-[50rem]"
+                      style={{
+                        transform: `scale(${scale})`,
+                      }}
+                    />
+                  )}
+                </div>
+
+                <div className="fixed top-40 left-20 bg-[#1f1f398f] rounded-xl h-10 flex justify-center cursor-pointer z-20">
+                  <Icon
+                    component={enlargeIcon}
+                    className="mx-2 flex"
+                    onClick={handleZoomIn}
                   />
-                ) : (
-                  <img
-                    src={fileReview.fileUrl}
-                    className="rounded-lg select-none max-w-[50rem]"
+                  <Icon
+                    component={narrowIcon}
+                    className="mx-2 flex"
+                    onClick={handleZoomOut}
                   />
-                )}
+                </div>
               </div>
             ) : (
               <Dropzone
@@ -147,7 +164,7 @@ export const UploadFile = () => {
                     {uploadListItem.type === "application/pdf" ? (
                       <div className="relative cursor-pointer flex justify-center items-center rounded-lg">
                         <iframe
-                          src={fun(uploadListItem.url)}
+                          src={pdfFileUrl(uploadListItem.url)}
                           scrolling="auto"
                           className="border-none overflow-hidden"
                           width="100px"
@@ -235,6 +252,7 @@ export const UploadFile = () => {
                 htmlType="submit"
                 className="cursor-pointer bg-gradient-to-r text-[#FFFFFF] from-[#44ABFE] to-[#7C67FF] hover:from-[#44ABFE] hover:to-[#7C67FF] mt-4 flex justify-center items-center h-10"
                 block
+                onClick={() => setIsStartTest(true)}
               >
                 開始檢測
               </Button>
@@ -246,7 +264,7 @@ export const UploadFile = () => {
       <div className="w-1/4 bg-white ml-6 my-4 rounded-lg flex flex-col">
         {!questionFeedback ? (
           <div>
-            <div className="bg-[#F8F8F8] mx-4 h-[2.5rem] mt-4 rounded-2xl flex min-w-[15rem] justify-between">
+            <div className="bg-[#F8F8F8] mx-3 py-1 mt-4 rounded-xl flex min-w-[15rem] justify-between">
               {resultTab.map((topItem, topIndex) => {
                 // 顶部参数选择
                 return (
@@ -267,37 +285,37 @@ export const UploadFile = () => {
               })}
             </div>
 
-            <div className="bg-[#ffffff] flex m-4">
-              {selectedValue === IResultType.Request ? (
-                //請求參數
-                <div className="flex flex-col overflow-auto h-[52rem]">
-                  {achParameter.map((paramter, paramterIndex) => {
-                    return (
-                      <div
-                        key={paramterIndex}
-                        className="m-4 text-[#323444] text-[0.88rem]"
-                      >
-                        {paramter.name}
-                        <span>{paramter.remarks}</span>
-                        <Radio.Group
-                          className="flex flex-row mt-4"
-                          defaultValue={"開啟"}
+            {isStartTest && uploadList.length > 0 ? (
+              <div className="bg-[#ffffff] flex m-4">
+                {selectedValue === IResultType.Request ? (
+                  //請求參數
+                  <div className="flex flex-col overflow-auto h-[50rem] w-full">
+                    {achParameter.map((paramter, paramterIndex) => {
+                      return (
+                        <div
+                          key={paramterIndex}
+                          className="m-4 text-[#323444] text-[0.88rem]"
                         >
-                          <Radio value={"開啟"} className="flex">
-                            開啟
-                          </Radio>
-                          <Radio value={"關閉"} className="flex">
-                            關閉
-                          </Radio>
-                        </Radio.Group>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : selectedValue === IResultType.Check ? (
-                // 核對結果
-                <div className="flex flex-col overflow-auto h-[52rem] w-full">
-                  <div>
+                          {paramter.name}
+                          <span>{paramter.remarks}</span>
+                          <Radio.Group
+                            className="flex flex-row mt-4"
+                            defaultValue={"開啟"}
+                          >
+                            <Radio value={"開啟"} className="flex">
+                              開啟
+                            </Radio>
+                            <Radio value={"關閉"} className="flex">
+                              關閉
+                            </Radio>
+                          </Radio.Group>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : selectedValue === IResultType.Check ? (
+                  // 核對結果
+                  <div className="flex flex-col overflow-auto h-[50rem] w-full">
                     {isAllNormal ? (
                       <div className="bg-[#EBF9F3] font-semibold text-[1rem] w-full py-2 flex justify-center">
                         核對結果
@@ -321,67 +339,73 @@ export const UploadFile = () => {
                         </div>
                       </div>
                     )}
-                  </div>
 
-                  {filterParams.map((resultItem, resultIndex) => {
-                    return (
-                      <div
-                        key={resultIndex}
-                        className="text-[#323444] text-[0.88rem] flex justify-between m-3"
-                      >
-                        {resultItem.name}
-                        <div>
-                          {resultItem.status === "正常" ? (
-                            <div className="bg-[#EBF9F3] flex justify-center rounded-xl px-5 py-1">
-                              <Icon component={normalIcon} />
-                              <span className=" text-[#34A46E]">正常</span>
-                            </div>
-                          ) : resultItem.status === "異常" ? (
-                            <div className="bg-[#FFF2F2] flex justify-center rounded-xl px-5 py-1">
-                              <Icon component={abnormalIcon} />
-                              <span className=" text-[#F04E4E]">異常</span>
-                            </div>
-                          ) : (
-                            ""
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                //識別結果
-                <div className="flex flex-col w-full h-[48rem]">
-                  {achParameter.map((paramItem, paramIndex) => {
-                    return (
-                      <div>
+                    {filterParams.map((resultItem, resultIndex) => {
+                      return (
                         <div
-                          key={paramIndex}
-                          className="m-2 text-[#323444] text-[0.88rem] overflow-auto py-2"
+                          key={resultIndex}
+                          className="text-[#323444] text-[0.88rem] flex justify-between m-3"
                         >
-                          {paramItem.name}
-                          <span>：{paramItem.item}</span>
+                          {resultItem.name}
+                          <div>
+                            {resultItem.status === "正常" ? (
+                              <div className="bg-[#EBF9F3] flex justify-center rounded-xl px-5 py-1">
+                                <Icon component={normalIcon} />
+                                <span className=" text-[#34A46E]">正常</span>
+                              </div>
+                            ) : resultItem.status === "異常" ? (
+                              <div className="bg-[#FFF2F2] flex justify-center rounded-xl px-5 py-1">
+                                <Icon component={abnormalIcon} />
+                                <span className=" text-[#F04E4E]">異常</span>
+                              </div>
+                            ) : (
+                              ""
+                            )}
+                          </div>
                         </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  //識別結果
+                  <div className="flex flex-col overflow-auto h-[50rem] w-full">
+                    {achParameter.map((paramItem, paramIndex) => {
+                      return (
+                        <div>
+                          <div
+                            key={paramIndex}
+                            className="m-2 text-[#323444] text-[0.88rem] overflow-auto py-2"
+                          >
+                            {paramItem.name}
+                            <span>：{paramItem.item}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="font-semibold text-[#323444] flex justify-center py-4">
+                      若識別有誤，請
+                      <div
+                        className="text-[#697FFF]"
+                        onClick={() => setQuestionFeedback(true)}
+                      >
+                        點擊反饋
                       </div>
-                    );
-                  })}
-                  <div className="font-semibold text-[#323444] flex justify-center py-4">
-                    若識別有誤，請
-                    <div
-                      className="text-[#697FFF]"
-                      onClick={() => setQuestionFeedback(true)}
-                    >
-                      點擊反饋
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            ) : (
+              <></>
+            )}
           </div>
         ) : (
-          <div className="m-6 flex flex-col">
+          <div className="m-6 flex flex-col overflow-auto h-[50rem]">
             <div className="flex justify-start items-center text-[#323444] text-[1.13rem] font-semibold">
-              <Icon component={arrowIcon} className="mr-1" />
+              <Icon
+                component={arrowIcon}
+                className="mr-1"
+                onClick={handleBackToParams}
+              />
               問題反饋
             </div>
 
@@ -414,7 +438,10 @@ export const UploadFile = () => {
               rows={5}
               placeholder="請詳細描述問題，有助於我們定位問題，不超過200字"
             />
-            <div className="bg-[#697FFF] w-full text-[#ffffff] rounded-lg py-3 text-[0.88rem] flex justify-center items-center mt-6">
+            <div
+              className="bg-[#697FFF] w-full text-[#ffffff] rounded-lg py-3 text-[0.88rem] flex justify-center items-center mt-6 cursor-pointer"
+              onClick={handleBackToParams}
+            >
               提交
             </div>
           </div>
