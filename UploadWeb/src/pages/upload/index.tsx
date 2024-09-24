@@ -47,10 +47,10 @@ export const UploadFile = () => {
   } = useAction();
 
   return (
-    <div className="flex box-border h-screen px-4 py-4 min-h-[34rem] bg-[#F8F8F8] w-full min-w-[75rem] justify-between">
-      <div className="w-3/4 flex flex-col justify-between flex-1 h-[55rem]">
+    <div className="flex box-border h-screen px-4 py-4 min-h-[34rem] bg-[#F8F8F8] min-w-[64rem] w-100vw overflow-hidden justify-between">
+      <div className="w-3/4 flex flex-col justify-between flex-1">
         {uploadList.length > 0 ? (
-          <div className="bg-[#031212] h-[5.25rem] w-full relative rounded-xl min-h-[5rem]">
+          <div className="bg-[#031212] h-[5.25rem] w-full relative rounded-xl ">
             <div className="absolute left-[3rem] top-[1rem] p-2 text-white text-[1.5rem] font-semibold">
               ACH Debit授權表識別
             </div>
@@ -153,7 +153,7 @@ export const UploadFile = () => {
             )}
           </div>
 
-          <div className="bg-[#F8F8F8] rounded-2xl flex justify-between items-center mt-2 p-4">
+          <div className="bg-[#F8F8F8] rounded-2xl flex justify-between items-center mt-4 p-4">
             <div className="flex">
               {uploadList.map((uploadListItem, uploadIndex) => (
                 //简缩图
@@ -261,12 +261,12 @@ export const UploadFile = () => {
         </div>
       </div>
 
-      <div className="w-1/4 bg-white ml-6 rounded-lg flex flex-col h-[55rem]">
+      <div className="w-1/4 bg-white ml-6 rounded-lg flex flex-col">
         {!questionFeedback ? (
           <div>
             <div className="bg-[#F8F8F8] mt-4 rounded-xl mx-4 box-border flex h-[2.25rem] text-nowrap">
               {resultTab
-                .filter((topItem) => !topItem.isCheck) // 过滤掉 isCheck 为 true 的项
+                .filter((topItem) => !topItem.isCheck)
                 .map((topItem, topIndex) => (
                   <div
                     key={topIndex}
