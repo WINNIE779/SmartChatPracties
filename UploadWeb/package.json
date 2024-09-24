@@ -1,0 +1,32 @@
+{
+  "name": "uploadfile",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@types/react-dropzone": "^5.1.0",
+    "ahooks": "^3.8.1",
+    "antd": "^5.20.5",
+    "axios": "^1.7.7",
+    "ramda": "^0.30.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-dropzone": "^14.2.3",
+    "react-router-dom": "^6.26.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.2",
+    "@types/react": "^17.0.33",
+    "@types/react-dom": "^17.0.10",
+    "@vitejs/plugin-react": "^1.0.7",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.44",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^4.5.4",
+    "vite": "^2.8.0"
+  }
+}
