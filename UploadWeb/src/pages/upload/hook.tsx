@@ -2,6 +2,9 @@ import { useUpdateEffect } from "ahooks";
 import { useRef, useState } from "react";
 import { IResultType, IUploadList } from "./prop";
 
+import { PostUpload } from "../../../services/api/upload/index";
+import { message } from "antd";
+
 export const useAction = () => {
   const achParameter = [
     {
@@ -172,6 +175,8 @@ export const useAction = () => {
     null
   );
 
+  const [loading, setLoading] = useState<boolean>(false);
+
   const [scale, setScale] = useState(1);
 
   const isAllNormal = achParameter.every((param) => param.status === "正常");
@@ -183,38 +188,53 @@ export const useAction = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const handleUploadFile = (files: File[]) => {
-    files.forEach((file) => {
+    const uploadFile = (
+      file: File,
+      fileUrl: string | ArrayBuffer,
+      index: number
+    ) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      setLoading(true); // 上传开始前设置 loading 状态
+
+      // 调用上传接口
+      PostUpload(formData)
+        .then((res) => {
+          setUploadList((prevList) => [
+            ...prevList,
+            {
+              id: prevList.length + 1,
+              url: res.fileUrl, // 使用生成的 PDF URL
+              type: file.type,
+            },
+          ]);
+          if (index + 1 === files.length) {
+            setLoading(false); // 最后一个文件上传完成后关闭 loading
+          }
+        })
+        .catch((err) => {
+          message.error(err.msg);
+          setLoading(false);
+        });
+    };
+    files.forEach((file, index) => {
       const reader = new FileReader();
 
       reader.onloadend = () => {
-        // PDF 文件
         if (file.type.includes("application/pdf")) {
-          const arrayBuffer = reader.result as ArrayBuffer; // 使用 ArrayBuffer 读取 PDF 文件
+          const arrayBuffer = reader.result as ArrayBuffer;
           const pdfBlob = new Blob([arrayBuffer], { type: "application/pdf" });
           const pdfUrl = URL.createObjectURL(pdfBlob);
 
-          setUploadList((prevList) => [
-            ...prevList,
-            {
-              id: prevList.length + 1,
-              url: reader.result as string,
-              type: file.type,
-            },
-          ]);
-        }
-        // 图片文件
-        else {
-          setUploadList((prevList) => [
-            ...prevList,
-            {
-              id: prevList.length + 1,
-              url: reader.result as string,
-              type: file.type,
-            },
-          ]);
+          uploadFile(file, pdfUrl, index); // 上传 PDF 文件
+        } else {
+          const imageUrl = reader.result as string;
+          uploadFile(file, imageUrl, index); // 上传图片文件
         }
       };
 
+      // 根据文件类型读取文件
       if (file.type.includes("application/pdf")) {
         reader.readAsArrayBuffer(file); // PDF 文件使用 ArrayBuffer
       } else {
@@ -248,9 +268,7 @@ export const useAction = () => {
 
   useUpdateEffect(() => {
     if (fileReview?.fileType === "application/pdf") {
-      // 處理pdf文件上傳，将 ArrayBuffer 转换为 Blob
-      const blob = new Blob([fileReview.fileUrl], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
+      const url = fileReview.fileUrl;
 
       if (iframeRef.current) {
         iframeRef.current.src = url; // 设置 Blob URL 到 iframe
@@ -271,7 +289,7 @@ export const useAction = () => {
     });
   }, [uploadList]);
 
-  const pdfFileUrl = (fileUrl: any) => {
+  const pdfFileUrl = (fileUrl: ArrayBuffer) => {
     const blob = new Blob([fileUrl], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
 
@@ -294,6 +312,8 @@ export const useAction = () => {
     selectQuestionType,
     isStartTest,
     scale,
+    loading,
+    setLoading,
     handleBackToParams,
     handleZoomOut,
     handleZoomIn,
@@ -313,4 +333,3 @@ export const useAction = () => {
     handleRemoveFile,
   };
 };
-export { IResultType };

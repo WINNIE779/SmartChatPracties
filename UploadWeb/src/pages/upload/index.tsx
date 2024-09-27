@@ -10,11 +10,13 @@ import {
   normalIcon,
 } from "@/icon/index";
 import { Button, Image, Radio, Switch } from "antd";
-import { IResultType, useAction } from "./hook";
+import { useAction } from "./hook";
 import Dropzone from "react-dropzone";
 import Icon from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
 import React from "react";
+
+import { IResultType } from "./prop";
 
 export const UploadFile = () => {
   const {
@@ -164,7 +166,11 @@ export const UploadFile = () => {
                     {uploadListItem.type === "application/pdf" ? (
                       <div className="relative cursor-pointer flex justify-center items-center rounded-lg overflow-auto">
                         <iframe
-                          src={pdfFileUrl(uploadListItem.url)}
+                          src={
+                            typeof uploadListItem.url === "string"
+                              ? uploadListItem.url
+                              : pdfFileUrl(uploadListItem.url)
+                          }
                           scrolling="auto"
                           className="border-none overflow-hidden"
                           width="100px"

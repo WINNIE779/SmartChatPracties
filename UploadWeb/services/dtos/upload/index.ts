@@ -6,6 +6,6 @@ export interface GetAttachUrl {
   fileName: string;
   fileSize: number;
   filePath: string;
-  fileContent: string;
+  fileContent?: string;
   originFileName: string;
 }
