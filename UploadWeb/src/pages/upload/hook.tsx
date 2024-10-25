@@ -1,335 +1,388 @@
-import { useUpdateEffect } from "ahooks";
-import { useRef, useState } from "react";
-import { IResultType, IUploadList } from "./prop";
-
-import { PostUpload } from "../../../services/api/upload/index";
-import { message } from "antd";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemoizedFn, useUpdateEffect } from "ahooks";
+import {
+  GetParamsSetting,
+  GetRecordsList,
+  PostAttachment,
+  PostParamsSettingUpdate,
+  PostRecognize,
+  PostUpload,
+} from "@/services/api/upload";
+import {
+  GetAttachUrl,
+  IFileType,
+  ISearchParams,
+  RecognizeRequest,
+  RecordsDto,
+} from "@/services/dtos/upload";
+import { Document } from "../upload/prop";
+import {
+  AchSearchParams,
+  CreditFormMultipleParams,
+  CreditFormSingleParams,
+  CustomerBankPaymentApplicationFormParams,
+  CustomerRegistrationFormParams,
+  CustomerShippingDisclaimerParams,
+} from "@/services/dtos/public";
+import { clone, isEmpty, isNil } from "ramda";
+import { routerState } from "@/models";
+import { App } from "antd";
+import { IDentifyFileDetectStatus } from "./prop";
+import { useRecoilValue } from "recoil";
+import { replaceWithLatest } from "@/utils";
 
 export const useAction = () => {
-  const achParameter = [
-    {
-      name: "授權人",
-      remarks: "（必填，僅英文）",
-      status: "正常",
-      item: "Herry.w",
-    },
-    {
-      name: "公司名字",
-      remarks: "（必填）",
-      status: "正常",
-      item: "Chinese Restaurant",
-    },
-    {
-      name: "餐館名字",
-      remarks: "（必填）",
-      status: "正常",
-      item: "中餐廳",
-    },
-    {
-      name: "公司名字和餐館名字",
-      remarks: "（其中一個名字需要和SAP餐館的英文名一致）",
-      status: "正常",
-      item: "XXXXXXXXXX123",
-    },
-    {
-      name: "賬單地址",
-      remarks: "（必填）",
-      status: "正常",
-      item: "ZZZZZZ中餐廳",
-    },
-    {
-      name: "電話",
-      remarks: "（必填）",
-      status: "正常",
-      item: "11111112212",
-    },
-    {
-      name: "城市，州，郵編",
-      remarks: "（必填）",
-      status: "正常",
-      item: "XX.0000.233256",
-    },
-    {
-      name: "郵箱",
-      remarks: "（必填）",
-      status: "正常",
-      item: "22222@djkf.com",
-    },
-    {
-      name: "賬戶名稱",
-      remarks: "（必填，和支票一致）",
-      status: "正常",
-      item: "dsadsds",
-    },
-    {
-      name: "銀行名稱",
-      remarks: "（必填，和支票一致）",
-      status: "正常",
-      item: "02232WWWWWW",
-    },
-    {
-      name: "賬號",
-      remarks: "（必填，和支票一致）",
-      status: "正常",
-      item: "99999999",
-    },
-    {
-      name: "銀行代碼",
-      remarks: "（必填，和支票一致）",
-      status: "正常",
-      item: "8888888",
-    },
-    {
-      name: "銀行所在城市、州",
-      remarks: "（必填）",
-      status: "正常",
-      item: "99999999",
-    },
-    {
-      name: "簽名",
-      remarks: "（必填，需要和授權人一致）",
-      status: "正常",
-      item: "8888888",
-    },
-  ];
+  const { message } = App.useApp();
 
-  const resultTab = [
-    {
-      label: "識別結果",
-      value: IResultType.Identify,
-      isCheck: false,
-    },
-    {
-      label: "核對結果",
-      value: IResultType.Check,
-      isCheck: false,
-    },
-    {
-      label: "請求參數",
-      value: IResultType.Request,
-      isCheck: false,
-    },
-    {
-      label: "問題反饋",
-      value: IResultType.Question,
-      isCheck: true,
-    },
-  ];
+  const routerMsg = useRecoilValue(routerState);
 
-  const questionType = [
-    {
-      label: "識別結果錯誤",
-      value: "識別結果錯誤",
-    },
-    {
-      label: "核對結果錯誤",
-      value: "核對結果錯誤",
-    },
-    {
-      label: "請求參數無效",
-      value: "請求參數無效",
-    },
-    {
-      label: "功能咨詢",
-      value: "功能咨詢",
-    },
-    {
-      label: "漏識別",
-      value: "漏識別",
-    },
-    {
-      label: "其他",
-      value: "其他",
-    },
-  ];
+  const [uploadList, setUploadList] = useState<GetAttachUrl[]>([]);
 
-  const selectItemCss = (isTrue: boolean) => {
-    return `${
-      isTrue
-        ? "bg-gradient-to-r from-[#48A7FF] to-[#796DFF] text-white"
-        : "text-[#323444]"
-    } 
-      flex-1 box-border py-2 rounded-xl text-center cursor-pointer text-sm`;
+  const [requestParams, setRequestParams] = useState<ISearchParams[]>([]);
+
+  const [requestParamsJson, setRequestParamsJson] = useState<string>("");
+
+  const initBannerInfo = {
+    banner: "",
+    title: "",
+    description: "string",
   };
 
-  const [selectedValue, setSelectedValue] = useState<IResultType>(
-    IResultType.Identify
-  );
+  const [bannerInfo, setBannerInfo] = useState<{
+    banner: string;
+    title: string;
+    description: string;
+  }>(initBannerInfo);
 
-  const [uploadList, setUploadList] = useState<IUploadList[]>([]);
+  const [sectionId, setSectionId] = useState<number | null>(null);
 
-  const [currentPreview, setCurrentPreview] = useState<number | null>(null);
+  const [records, setRecords] = useState<RecordsDto[]>([]);
 
-  const [fileReview, setFileReview] = useState<{
-    fileUrl: string;
-    fileType: String;
-  } | null>(null);
+  const [clickAttachment, setClickAttachment] = useState<GetAttachUrl>();
 
-  const [showAbnormal, setShowAbnormal] = useState<boolean>(false);
+  const [clickAttachmentIndex, setClickAttachmentIndex] = useState<
+    number | undefined
+  >(undefined);
 
-  const [questionFeedback, setQuestionFeedback] = useState<boolean>(false);
-
-  const [isStartTest, setIsStartTest] = useState<boolean>(false);
-
-  const [selectQuestionType, setSelectQuestionType] = useState<string | null>(
-    null
-  );
+  const [detectionLoading, setDetectionLoading] = useState<boolean>(false);
 
   const [loading, setLoading] = useState<boolean>(false);
 
-  const [scale, setScale] = useState(1);
+  const [fileHeightZoom, setFileHeightZoom] = useState(100);
 
-  const isAllNormal = achParameter.every((param) => param.status === "正常");
+  const [fileWidthZoom, setFileWidthZoom] = useState(50);
+  const [zoom, setZoom] = useState(1);
 
-  const filterParams = showAbnormal
-    ? achParameter.filter((param) => param.status === "異常")
-    : achParameter;
+  const container = useRef(null);
 
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const continueExecution = useRef<boolean>(false);
 
-  const handleUploadFile = (files: File[]) => {
-    const uploadFile = (
-      file: File,
-      fileUrl: string | ArrayBuffer,
-      index: number
-    ) => {
+  const recordsId = useRef<number[]>([]);
+
+  const attachmentIds = useMemo(() => {
+    return uploadList.map((item) => item.id);
+  }, [uploadList]);
+
+  const clickRecords = useMemo(() => {
+    return records.find((x) => x.attachmentId === clickAttachment?.id);
+  }, [clickAttachment, records]);
+
+  const requestParamsMemo = useMemo(() => {
+    if (isEmpty(requestParams) || isNil(requestParams)) {
+      return;
+    } else {
+      return requestParams.reduce((acc: { [key: string]: boolean }, item) => {
+        acc[item.jsonObjKeyName] = item.open;
+
+        return acc;
+      }, {});
+    }
+  }, [requestParams]);
+
+  const fileToSizeAdd = () => {
+    // setFileHeightZoom((prevZoom) => prevZoom + 2);
+    // setFileWidthZoom((prevZoom) => prevZoom + 2);
+    setZoom((prevZoom) => prevZoom + 0.1);
+  };
+
+  const fileToSizeReduce = () => {
+    // setFileHeightZoom((prevZoom) => (prevZoom > 4 ? prevZoom - 4 : prevZoom));
+    // setFileWidthZoom((prevZoom) => (prevZoom > 4 ? prevZoom - 4 : prevZoom));
+    setZoom((prevZoom) => (prevZoom > 0.2 ? prevZoom - 0.1 : prevZoom));
+  };
+
+  const findEnumValueByName = (name: string): IFileType => {
+    // 根據文件類型名找對應的IFileType
+    for (const key in Document) {
+      if (Document.hasOwnProperty(key)) {
+        if (Document[key as unknown as keyof typeof Document] === name) {
+          return parseInt(key) as IFileType;
+        }
+      }
+    }
+    return IFileType.Ach;
+  };
+
+  const fileType = useMemo(() => {
+    if (!!routerMsg.section) {
+      return findEnumValueByName(routerMsg.section.name);
+    }
+  }, [routerMsg]);
+
+  const defaultParams = useMemo(() => {
+    let type: ISearchParams[] = [];
+    switch (fileType as IFileType) {
+      case IFileType.Ach:
+        type = AchSearchParams;
+        break;
+      case IFileType.CreditFormMultiple:
+        type = CreditFormMultipleParams;
+        break;
+      case IFileType.CreditFormSingle:
+        type = CreditFormSingleParams;
+        break;
+      case IFileType.CustomerBankPaymentApplicationForm:
+        type = CustomerBankPaymentApplicationFormParams;
+        break;
+      case IFileType.CustomerRegistrationForm:
+        type = CustomerRegistrationFormParams;
+        break;
+      case IFileType.CustomerShippingDisclaimer:
+        type = CustomerShippingDisclaimerParams;
+        break;
+    }
+    return type;
+  }, [fileType]);
+
+  const uploadExample = (value: IFileType) => {
+    // 示例文件
+    switch (value) {
+      case IFileType.Ach:
+        return 10743;
+      case IFileType.CreditFormMultiple:
+        return 10878;
+      case IFileType.CreditFormSingle:
+        return 10737;
+      case IFileType.CustomerBankPaymentApplicationForm:
+        return 10739;
+      case IFileType.CustomerRegistrationForm:
+        return 10734;
+      case IFileType.CustomerShippingDisclaimer:
+        return 10736;
+    }
+  };
+
+  const updateRequestParams = useMemoizedFn((key: string, value: boolean) => {
+    const data = clone(requestParams);
+
+    const index = data.findIndex((item) => item.jsonObjKeyName === key);
+
+    if (index >= 0) {
+      data[index].open = value;
+    }
+    setRequestParams(() => data);
+  });
+
+  const handleRemoveFile = (RemoveIndex: number) => {
+    if (detectionLoading) {
+      return;
+    }
+    setUploadList(uploadList.filter((_, index) => index !== RemoveIndex));
+  };
+
+  const handleUploadFile = (file: File[]) => {
+    if (file.find((x) => x.size > 5 * 1024 * 1024)) {
+      message.error("請上傳小於 5m 的文件");
+      return;
+    }
+    if (uploadList.length + file.length > 5) {
+      message.error("一次最多上傳五張");
+      return;
+    }
+
+    file.forEach((item, index) => {
       const formData = new FormData();
-      formData.append("file", file);
-
-      setLoading(true); // 上传开始前设置 loading 状态
-
-      // 调用上传接口
+      formData.append("file", item);
+      setLoading(true);
       PostUpload(formData)
         .then((res) => {
-          setUploadList((prevList) => [
-            ...prevList,
-            {
-              id: prevList.length + 1,
-              url: res.fileUrl, // 使用生成的 PDF URL
-              type: file.type,
-            },
-          ]);
-          if (index + 1 === files.length) {
-            setLoading(false); // 最后一个文件上传完成后关闭 loading
+          setUploadList((prev) => [...prev, res]);
+          if (index + 1 === file.length) {
+            setLoading(false);
           }
         })
         .catch((err) => {
           message.error(err.msg);
           setLoading(false);
         });
-    };
-    files.forEach((file, index) => {
-      const reader = new FileReader();
-
-      reader.onloadend = () => {
-        if (file.type.includes("application/pdf")) {
-          const arrayBuffer = reader.result as ArrayBuffer;
-          const pdfBlob = new Blob([arrayBuffer], { type: "application/pdf" });
-          const pdfUrl = URL.createObjectURL(pdfBlob);
-
-          uploadFile(file, pdfUrl, index); // 上传 PDF 文件
-        } else {
-          const imageUrl = reader.result as string;
-          uploadFile(file, imageUrl, index); // 上传图片文件
-        }
-      };
-
-      // 根据文件类型读取文件
-      if (file.type.includes("application/pdf")) {
-        reader.readAsArrayBuffer(file); // PDF 文件使用 ArrayBuffer
-      } else {
-        reader.readAsDataURL(file); // 图片文件使用 Base64 Data URL
-      }
     });
   };
 
-  const handleRemoveFile = (deleteIndex: number) => {
-    setUploadList((prev) => prev.filter((_, index) => index !== deleteIndex));
-  };
-
-  const handleReviewFile = (file: { fileUrl: string; fileType: string }) => {
-    setFileReview({
-      fileUrl: file.fileUrl,
-      fileType: file.fileType,
-    });
-  };
-
-  const handleZoomIn = () => {
-    setScale((prev) => Math.min(prev + 0.1, 3)); //最大放大3倍
-  };
-
-  const handleZoomOut = () => {
-    setScale((prev) => Math.max(prev - 0.1, 0.5)); //最小缩小0.5倍
-  };
-
-  const handleBackToParams = () => {
-    setQuestionFeedback(false);
-  };
-
-  useUpdateEffect(() => {
-    if (fileReview?.fileType === "application/pdf") {
-      const url = fileReview.fileUrl;
-
-      if (iframeRef.current) {
-        iframeRef.current.src = url; // 设置 Blob URL 到 iframe
-      }
-
-      return () => {
-        URL.revokeObjectURL(url); // 清理 Blob URL
-      };
+  const onUploadExample = () => {
+    if (isNil(fileType)) return;
+    if (uploadList.length >= 5) {
+      message.error("最多上傳 5 個文件");
+      return;
     }
-  }, [fileReview]);
+    const attachmentId = uploadExample(fileType);
+    setLoading(true);
+    PostAttachment({ attachmentIds: [attachmentId] })
+      .then((res) => {
+        setUploadList((prev) => [...prev, res[0]]);
+      })
+      .catch((err) => message.error(err.msg))
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  const handleStartTest = () => {
+    if (uploadList.length > 0) {
+      setDetectionLoading(true);
+
+      if (requestParams.length > 0) {
+        if (isNil(fileType)) return;
+        const paramsData = {
+          fileType: fileType,
+          paramsSettingJson: JSON.stringify(requestParamsMemo),
+        };
+        // 如果有請求參數則 update 請求參數再開始檢測
+        PostParamsSettingUpdate(paramsData)
+          .then((res) => {
+            handleStartDetection();
+            setRequestParamsJson(res.paramsJson);
+          })
+          .catch((err) => message.error(err.msg));
+        return;
+      }
+      handleStartDetection();
+    } else {
+      message.error("請上傳至少一個文件再進行檢測");
+    }
+  };
+
+  const handleStartDetection = () => {
+    if (isNil(fileType) || isNil(sectionId)) return;
+    continueExecution.current = true;
+    const data: RecognizeRequest = {
+      sectionId: sectionId,
+      fileType: fileType,
+      attachmentIds: attachmentIds,
+    };
+    PostRecognize(data)
+      .then((res) => {
+        recordsId.current = res.records.map((x) => x.id);
+        handleTestResults();
+      })
+      .catch((err) => {
+        message.error(err.msg);
+        recordsId.current = [];
+      });
+  };
+
+  const handleTestResults = () => {
+    // 輪詢
+    if (!continueExecution.current) return;
+    GetRecordsList(recordsId.current)
+      .then((res) => {
+        if (
+          res.every(
+            (x) =>
+              x.status !== IDentifyFileDetectStatus.Pending &&
+              x.status !== IDentifyFileDetectStatus.Processing
+          )
+        ) {
+          setRecords(res);
+          setDetectionLoading(false);
+          continueExecution.current = false;
+        }
+      })
+      .finally(() => {
+        // 等待1秒钟后再次执行
+        setTimeout(() => {
+          handleTestResults(); // 递归调用自己
+        }, 5000);
+      });
+  };
+
+  useEffect(() => {
+    setBannerInfo(
+      isNil(routerMsg.section)
+        ? initBannerInfo
+        : {
+            banner: routerMsg.section.banner,
+            title: routerMsg.section.title,
+            description: routerMsg.section.description,
+          }
+    );
+    setSectionId(isNil(routerMsg?.section) ? null : routerMsg.section.id);
+  }, [routerMsg]);
+
+  useEffect(() => {
+    if (!isNil(fileType)) {
+      GetParamsSetting(fileType)
+        .then((res) => {
+          setRequestParams(
+            replaceWithLatest(JSON.parse(res.paramsJson), defaultParams)
+          );
+        })
+        .catch((err) => {
+          message.error(err.msg);
+          setRequestParams(defaultParams);
+        });
+    }
+  }, [fileType]);
 
   useUpdateEffect(() => {
-    uploadList.length === 0 && setFileReview(null);
+    if (!isEmpty(requestParamsJson) && !isNil(requestParamsJson)) {
+      setRequestParams(
+        replaceWithLatest(JSON.parse(requestParamsJson), defaultParams)
+      );
+    }
+  }, [requestParamsJson]);
 
-    setFileReview({
-      fileUrl: uploadList[0]?.url,
-      fileType: uploadList[0]?.type,
-    });
+  useUpdateEffect(() => {
+    if (uploadList.length === 0) {
+      setClickAttachment(undefined);
+      setClickAttachmentIndex(undefined);
+    }
+    if (!clickAttachment && uploadList.length > 0) {
+      setClickAttachment(uploadList[0]);
+      setClickAttachmentIndex(0);
+    }
   }, [uploadList]);
 
-  const pdfFileUrl = (fileUrl: ArrayBuffer) => {
-    const blob = new Blob([fileUrl], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
+  useUpdateEffect(() => {
+    setUploadList([]);
 
-    return url;
-  };
+    continueExecution.current = false;
+    setDetectionLoading(false);
+  }, [fileType]);
 
   return {
-    resultTab,
-    achParameter,
-    uploadList,
-    selectedValue,
-    currentPreview,
-    iframeRef,
-    fileReview,
-    isAllNormal,
-    showAbnormal,
-    filterParams,
-    questionFeedback,
-    questionType,
-    selectQuestionType,
-    isStartTest,
-    scale,
+    fileType,
     loading,
-    setLoading,
-    handleBackToParams,
-    handleZoomOut,
-    handleZoomIn,
-    setScale,
-    setIsStartTest,
-    pdfFileUrl,
-    setSelectQuestionType,
-    setQuestionFeedback,
-    setShowAbnormal,
-    handleReviewFile,
-    setFileReview,
-    setCurrentPreview,
-    setSelectedValue,
-    setUploadList,
+    bannerInfo,
+    uploadList,
+    clickRecords,
+    requestParams,
+    clickAttachment,
+    detectionLoading,
+    fileHeightZoom,
+    fileWidthZoom,
+    fileToSizeAdd,
+    fileToSizeReduce,
+    setFileWidthZoom,
+    setFileHeightZoom,
+    handleStartTest,
     handleUploadFile,
-    selectItemCss,
     handleRemoveFile,
+    onUploadExample,
+    setClickAttachment,
+    updateRequestParams,
+    Document,
+    clickAttachmentIndex,
+    setClickAttachmentIndex,
+    zoom,
   };
 };
