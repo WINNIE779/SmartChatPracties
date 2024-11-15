@@ -1,5 +1,3 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useMemoizedFn, useUpdateEffect } from "ahooks";
 import {
   GetParamsSetting,
   GetRecordsList,
@@ -9,32 +7,28 @@ import {
   PostUpload,
 } from "@/services/api/upload";
 import {
+  AchSearchParams,
   GetAttachUrl,
+  IDentifyFileDetectStatus,
   IFileType,
   ISearchParams,
-  RecognizeRequest,
-  RecordsDto,
-} from "@/services/dtos/upload";
-import { Document } from "../upload/prop";
-import {
-  AchSearchParams,
+  Document,
   CreditFormMultipleParams,
   CreditFormSingleParams,
   CustomerBankPaymentApplicationFormParams,
   CustomerRegistrationFormParams,
   CustomerShippingDisclaimerParams,
 } from "@/services/dtos/public";
-import { clone, isEmpty, isNil } from "ramda";
-import { routerState } from "@/models";
-import { App } from "antd";
-import { IDentifyFileDetectStatus } from "./prop";
-import { useRecoilValue } from "recoil";
+import { RecognizeRequest, RecordsDto } from "@/services/dtos/upload";
 import { replaceWithLatest } from "@/utils";
+import { useMemoizedFn, useUpdateEffect } from "ahooks";
+import { App } from "antd";
+import { clone, isEmpty, isNil } from "ramda";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { message as antMessage } from "antd";
 
 export const useAction = () => {
   const { message } = App.useApp();
-
-  const routerMsg = useRecoilValue(routerState);
 
   const [uploadList, setUploadList] = useState<GetAttachUrl[]>([]);
 
@@ -54,8 +48,6 @@ export const useAction = () => {
     description: string;
   }>(initBannerInfo);
 
-  const [sectionId, setSectionId] = useState<number | null>(null);
-
   const [records, setRecords] = useState<RecordsDto[]>([]);
 
   const [clickAttachment, setClickAttachment] = useState<GetAttachUrl>();
@@ -71,9 +63,8 @@ export const useAction = () => {
   const [fileHeightZoom, setFileHeightZoom] = useState(100);
 
   const [fileWidthZoom, setFileWidthZoom] = useState(50);
-  const [zoom, setZoom] = useState(1);
 
-  const container = useRef(null);
+  const [zoom, setZoom] = useState(1);
 
   const continueExecution = useRef<boolean>(false);
 
@@ -88,46 +79,22 @@ export const useAction = () => {
   }, [clickAttachment, records]);
 
   const requestParamsMemo = useMemo(() => {
-    if (isEmpty(requestParams) || isNil(requestParams)) {
-      return;
-    } else {
-      return requestParams.reduce((acc: { [key: string]: boolean }, item) => {
-        acc[item.jsonObjKeyName] = item.open;
+    return requestParams.reduce((acc: { [key: string]: boolean }, item) => {
+      acc[item.jsonObjKeyName] = item.open;
 
-        return acc;
-      }, {});
-    }
+      return acc;
+    }, {});
   }, [requestParams]);
 
   const fileToSizeAdd = () => {
-    // setFileHeightZoom((prevZoom) => prevZoom + 2);
-    // setFileWidthZoom((prevZoom) => prevZoom + 2);
     setZoom((prevZoom) => prevZoom + 0.1);
   };
 
   const fileToSizeReduce = () => {
-    // setFileHeightZoom((prevZoom) => (prevZoom > 4 ? prevZoom - 4 : prevZoom));
-    // setFileWidthZoom((prevZoom) => (prevZoom > 4 ? prevZoom - 4 : prevZoom));
     setZoom((prevZoom) => (prevZoom > 0.2 ? prevZoom - 0.1 : prevZoom));
   };
 
-  const findEnumValueByName = (name: string): IFileType => {
-    // 根據文件類型名找對應的IFileType
-    for (const key in Document) {
-      if (Document.hasOwnProperty(key)) {
-        if (Document[key as unknown as keyof typeof Document] === name) {
-          return parseInt(key) as IFileType;
-        }
-      }
-    }
-    return IFileType.Ach;
-  };
-
-  const fileType = useMemo(() => {
-    if (!!routerMsg.section) {
-      return findEnumValueByName(routerMsg.section.name);
-    }
-  }, [routerMsg]);
+  const fileType = IFileType.Ach;
 
   const defaultParams = useMemo(() => {
     let type: ISearchParams[] = [];
@@ -160,15 +127,15 @@ export const useAction = () => {
       case IFileType.Ach:
         return 10743;
       case IFileType.CreditFormMultiple:
-        return 10878;
+        return 11367;
       case IFileType.CreditFormSingle:
         return 10737;
       case IFileType.CustomerBankPaymentApplicationForm:
-        return 10739;
+        return 11388;
       case IFileType.CustomerRegistrationForm:
         return 10734;
       case IFileType.CustomerShippingDisclaimer:
-        return 10736;
+        return 11393;
     }
   };
 
@@ -191,25 +158,26 @@ export const useAction = () => {
   };
 
   const handleUploadFile = (file: File[]) => {
-    if (file.find((x) => x.size > 5 * 1024 * 1024)) {
-      message.error("請上傳小於 5m 的文件");
-      return;
-    }
-    if (uploadList.length + file.length > 5) {
-      message.error("一次最多上傳五張");
-      return;
+    const fileList = clone(file)
+      .filter((item) => item.size <= 5 * 1024 * 1024)
+      .splice(0, 5 - uploadList.length);
+
+    if (!fileList.length) {
+      return message.error("沒有符合要求的文件");
     }
 
-    file.forEach((item, index) => {
+    fileList.forEach((item, index) => {
       const formData = new FormData();
       formData.append("file", item);
       setLoading(true);
       PostUpload(formData)
         .then((res) => {
           setUploadList((prev) => [...prev, res]);
-          if (index + 1 === file.length) {
+          if (index + 1 === fileList.length) {
             setLoading(false);
           }
+
+          setRequestParams(AchSearchParams);
         })
         .catch((err) => {
           message.error(err.msg);
@@ -229,6 +197,7 @@ export const useAction = () => {
     PostAttachment({ attachmentIds: [attachmentId] })
       .then((res) => {
         setUploadList((prev) => [...prev, res[0]]);
+        setRequestParams(AchSearchParams);
       })
       .catch((err) => message.error(err.msg))
       .finally(() => {
@@ -237,22 +206,27 @@ export const useAction = () => {
   };
 
   const handleStartTest = () => {
-    if (uploadList.length > 0) {
+    if (uploadList.length >= 0) {
       setDetectionLoading(true);
 
-      if (requestParams.length > 0) {
+      if (requestParams.length >= 0) {
         if (isNil(fileType)) return;
+
         const paramsData = {
           fileType: fileType,
           paramsSettingJson: JSON.stringify(requestParamsMemo),
         };
+
         // 如果有請求參數則 update 請求參數再開始檢測
         PostParamsSettingUpdate(paramsData)
           .then((res) => {
             handleStartDetection();
             setRequestParamsJson(res.paramsJson);
           })
-          .catch((err) => message.error(err.msg));
+          .catch((err) => {
+            message.error(err.msg);
+            setDetectionLoading(false);
+          });
         return;
       }
       handleStartDetection();
@@ -262,13 +236,13 @@ export const useAction = () => {
   };
 
   const handleStartDetection = () => {
-    if (isNil(fileType) || isNil(sectionId)) return;
     continueExecution.current = true;
+
     const data: RecognizeRequest = {
-      sectionId: sectionId,
       fileType: fileType,
       attachmentIds: attachmentIds,
     };
+
     PostRecognize(data)
       .then((res) => {
         recordsId.current = res.records.map((x) => x.id);
@@ -276,20 +250,22 @@ export const useAction = () => {
       })
       .catch((err) => {
         message.error(err.msg);
+        setDetectionLoading(false);
         recordsId.current = [];
       });
   };
 
+  // 輪詢
   const handleTestResults = () => {
-    // 輪詢
     if (!continueExecution.current) return;
+
     GetRecordsList(recordsId.current)
       .then((res) => {
         if (
-          res.every(
-            (x) =>
-              x.status !== IDentifyFileDetectStatus.Pending &&
-              x.status !== IDentifyFileDetectStatus.Processing
+          res.every((x) =>
+            x.status !== IDentifyFileDetectStatus.Pending
+              ? x.status !== IDentifyFileDetectStatus.Processing
+              : ""
           )
         ) {
           setRecords(res);
@@ -298,7 +274,6 @@ export const useAction = () => {
         }
       })
       .finally(() => {
-        // 等待1秒钟后再次执行
         setTimeout(() => {
           handleTestResults(); // 递归调用自己
         }, 5000);
@@ -306,31 +281,16 @@ export const useAction = () => {
   };
 
   useEffect(() => {
-    setBannerInfo(
-      isNil(routerMsg.section)
-        ? initBannerInfo
-        : {
-            banner: routerMsg.section.banner,
-            title: routerMsg.section.title,
-            description: routerMsg.section.description,
-          }
-    );
-    setSectionId(isNil(routerMsg?.section) ? null : routerMsg.section.id);
-  }, [routerMsg]);
-
-  useEffect(() => {
-    if (!isNil(fileType)) {
-      GetParamsSetting(fileType)
-        .then((res) => {
-          setRequestParams(
-            replaceWithLatest(JSON.parse(res.paramsJson), defaultParams)
-          );
-        })
-        .catch((err) => {
-          message.error(err.msg);
-          setRequestParams(defaultParams);
-        });
-    }
+    GetParamsSetting(fileType)
+      .then((res) => {
+        setRequestParams(
+          replaceWithLatest(JSON.parse(res.paramsJson), defaultParams)
+        );
+      })
+      .catch((err) => {
+        message.error(err.msg);
+        setRequestParams(defaultParams);
+      });
   }, [fileType]);
 
   useUpdateEffect(() => {
@@ -342,10 +302,7 @@ export const useAction = () => {
   }, [requestParamsJson]);
 
   useUpdateEffect(() => {
-    if (uploadList.length === 0) {
-      setClickAttachment(undefined);
-      setClickAttachmentIndex(undefined);
-    }
+    // 上传第一个文件时默认显示第一个文件
     if (!clickAttachment && uploadList.length > 0) {
       setClickAttachment(uploadList[0]);
       setClickAttachmentIndex(0);
@@ -354,12 +311,16 @@ export const useAction = () => {
 
   useUpdateEffect(() => {
     setUploadList([]);
+    setClickAttachment(undefined);
+    setClickAttachmentIndex(undefined);
 
     continueExecution.current = false;
     setDetectionLoading(false);
   }, [fileType]);
 
   return {
+    zoom,
+    Document,
     fileType,
     loading,
     bannerInfo,
@@ -370,6 +331,8 @@ export const useAction = () => {
     detectionLoading,
     fileHeightZoom,
     fileWidthZoom,
+    clickAttachmentIndex,
+    requestParamsJson,
     fileToSizeAdd,
     fileToSizeReduce,
     setFileWidthZoom,
@@ -380,9 +343,6 @@ export const useAction = () => {
     onUploadExample,
     setClickAttachment,
     updateRequestParams,
-    Document,
-    clickAttachmentIndex,
     setClickAttachmentIndex,
-    zoom,
   };
 };

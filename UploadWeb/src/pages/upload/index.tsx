@@ -2,7 +2,9 @@ import uploadBg from "@/asset/uploadBg.png";
 import {
   AddIcon,
   UploadIcon,
+  cloudUpload,
   deleteIcon,
+  detectionIcon,
   enlargeIcon,
   narrowIcon,
 } from "@/icon/index";
@@ -10,37 +12,30 @@ import { Button, Image, Spin } from "antd";
 import { useAction } from "./hook";
 import Dropzone from "react-dropzone";
 import Icon, { LoadingOutlined } from "@ant-design/icons";
-import { useEffect } from "react";
 import React from "react";
 import { isNil } from "ramda";
 import { RecognitionFileComponent } from "../recognition-file";
 
 export const UploadFile = () => {
   const {
+    zoom,
+    Document,
     fileType,
     loading,
-    bannerInfo,
     uploadList,
     clickRecords,
     requestParams,
     clickAttachment,
     detectionLoading,
-    fileHeightZoom,
-    fileWidthZoom,
     fileToSizeAdd,
     fileToSizeReduce,
-    setFileWidthZoom,
-    setFileHeightZoom,
     handleStartTest,
     handleUploadFile,
     handleRemoveFile,
     onUploadExample,
     setClickAttachment,
     updateRequestParams,
-    Document,
-    clickAttachmentIndex,
     setClickAttachmentIndex,
-    zoom,
   } = useAction();
 
   const isClickPdf =
@@ -50,7 +45,7 @@ export const UploadFile = () => {
   return (
     <div className="flex box-border h-screen px-4 py-4 min-h-[34rem] bg-[#F8F8F8] min-w-[64rem] w-100vw overflow-hidden justify-between">
       <div className="w-3/4 flex flex-col justify-between flex-1">
-        {!clickAttachment && isNil(fileType) ? (
+        {!clickAttachment && !isNil(fileType) ? (
           <div>
             <div className="relative flex flex-col">
               <img
@@ -138,7 +133,6 @@ export const UploadFile = () => {
                       />
                     )}
                   </div>
-
                   <div className="fixed top-40 left-20 bg-[#1f1f398f] rounded-xl h-10 flex justify-center cursor-pointer z-20">
                     <Icon
                       component={enlargeIcon}
@@ -155,7 +149,6 @@ export const UploadFile = () => {
               )
             )}
           </div>
-
           <div className="bg-[#F8F8F8] rounded-2xl flex justify-between items-center mt-4 p-4">
             <div className="flex">
               {uploadList.map((uploadListItem, uploadIndex) => (
@@ -256,6 +249,10 @@ export const UploadFile = () => {
                 onClick={onUploadExample}
                 disabled={detectionLoading}
               >
+                <Icon
+                  component={cloudUpload}
+                  className={`${detectionLoading ? "text-slate-300" : ""}`}
+                />
                 上傳示例
               </Button>
 
@@ -267,6 +264,7 @@ export const UploadFile = () => {
                 loading={detectionLoading}
                 onClick={handleStartTest}
               >
+                {!detectionLoading && <Icon component={detectionIcon} />}
                 開始檢測
               </Button>
             </div>
@@ -282,6 +280,7 @@ export const UploadFile = () => {
           recognizedRecordld={clickRecords?.id}
           detectionJson={clickRecords?.detectionJson ?? null}
           recognizedJson={clickRecords?.recognizedJson ?? null}
+          originalResponse={clickRecords?.originalResponse ?? null}
           fileIDentifyFileDetectStatus={clickRecords?.status ?? null}
           updateRequestParams={updateRequestParams}
         />

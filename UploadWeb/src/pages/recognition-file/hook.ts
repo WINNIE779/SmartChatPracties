@@ -1,12 +1,12 @@
-import { PostFeedbackAdd } from "@/services/api/upload";
-import React from "react";
-
-import { FeedbackAddRequest, IFileType } from "@/services/dtos/upload";
-import { useDebounceFn, useMemoizedFn, useUpdateEffect } from "ahooks";
+import { FeedbackAddRequest } from "@/services/dtos/upload";
 import { App } from "antd";
-import { isNil } from "ramda";
 import { useEffect, useRef, useState } from "react";
-import { IFunEvent } from "../upload/prop";
+
+import { useDebounceFn, useMemoizedFn, useUpdateEffect } from "ahooks";
+import { PostFeedbackAdd } from "@/services/api/upload";
+import { isNil } from "ramda";
+import React from "react";
+import { IFileType, IFunEvent } from "@/services/dtos/public";
 
 export const useAction = ({
   isCheck,

@@ -5,13 +5,11 @@ import { Input, Radio, Switch } from "antd";
 import { isEmpty, isNil } from "ramda";
 import { useCallback } from "react";
 import { useAction } from "./hook";
-import {
-  IDentifyFileDetectStatus,
-  IFunEvent,
-  IRecognitionFileComponentProps,
-} from "../upload/prop";
+
 import { arrowIcon } from "@/icon";
 import Icon from "@ant-design/icons";
+import { IRecognitionFileComponentProps } from "./props";
+import { IDentifyFileDetectStatus, IFunEvent } from "@/services/dtos/public";
 
 const selectItemCss = (isTrue: boolean, isCheck: boolean) => {
   return `${
@@ -87,7 +85,7 @@ export const RecognitionFileComponent = (
     recognizedRecordld,
     sectionld,
     fileIDentifyFileDetectStatus,
-    fileType,
+    originalResponse,
   } = props;
 
   const {
@@ -106,7 +104,15 @@ export const RecognitionFileComponent = (
     upadteQuestionType,
     setIsOnlyDisplayError,
     submitQeustionFeedback,
-  } = useAction({ isCheck, fileType });
+  } = useAction({ isCheck });
+
+  let errorMessage = "";
+
+  try {
+    errorMessage = JSON.parse(originalResponse ?? "").message;
+  } catch {
+    errorMessage = "";
+  }
 
   const renderRecognizedItem = useCallback(
     (key: string, value: any, index: number) => {
@@ -199,7 +205,12 @@ export const RecognitionFileComponent = (
             <div>本次識別失敗，請重試</div>
           ) : (
             (ObjConvertList ?? []).map(([key, value], index) => {
-              return renderRecognizedItem(key, value, index);
+              return renderRecognizedItem(
+                key,
+                value,
+                index
+                // IFunEvent.Identify
+              );
             })
           )}
         </div>

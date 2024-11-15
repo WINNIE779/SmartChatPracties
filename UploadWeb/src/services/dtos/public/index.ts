@@ -1,5 +1,50 @@
-import { DepartNameEnum } from "@/pages/upload/prop";
-import { ISearchParams } from "../upload";
+export enum IdentifyFileSectionType {
+  OfficeDocument,
+  FinancialNote,
+  CardText,
+}
+
+export const IdentifyFileSectionTypeText = {
+  [IdentifyFileSectionType.OfficeDocument]: "辦公文檔識別",
+  [IdentifyFileSectionType.FinancialNote]: "財務票據識別",
+  [IdentifyFileSectionType.CardText]: "卡證文字識别",
+};
+
+export interface IPageLoadingProps {
+  page: number;
+  pageSize: number;
+  loading?: boolean;
+}
+
+export enum IFileType {
+  Ach, // ACH Debit授權表
+  CreditFormSingle, // 信用表單店版
+  CreditFormMultiple, // 信用表多店版
+  CustomerRegistrationForm, // 客戶登記表
+  CustomerShippingDisclaimer, // 送貨免責聲明
+  CustomerBankPaymentApplicationForm, // 銀行卡付款申請表
+}
+
+export enum IFunEvent {
+  Identify,
+  Check,
+  Request,
+  Question,
+}
+
+export interface ISearchParams {
+  value: string;
+  open: boolean;
+  description: string;
+  jsonObjKeyName: string;
+}
+
+export enum IDentifyFileDetectStatus {
+  Pending,
+  Processing,
+  Success,
+  Failed,
+}
 
 // ACH
 export const AchSearchParams: ISearchParams[] = [
@@ -1303,10 +1348,37 @@ export enum UploadStateEnum {
   Failed,
 }
 
-export enum IdentifyFileSectionType {
-  OfficeDocument,
-  FinancialNote,
-  CardText,
+export interface GetAttachUrl {
+  id: number;
+  uuid: string;
+  createDate: string;
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  filePath: string;
+  title?: string;
+  originFileName: string;
+}
+
+export const Document = {
+  [IFileType.Ach]: "ACH Debit授權表",
+  [IFileType.CustomerRegistrationForm]: "客戶登記表",
+  [IFileType.CustomerShippingDisclaimer]: "送貨免責聲明",
+  [IFileType.CreditFormSingle]: "信用表單店版",
+  [IFileType.CreditFormMultiple]: "信用表多店版",
+  [IFileType.CustomerBankPaymentApplicationForm]: "銀行卡付款申請表",
+};
+
+export enum DepartNameEnum {
+  Rmc = 1,
+  Osc = 2,
+  Hrc = 3,
+}
+
+export interface IModuleListProps {
+  PageSize: number;
+  PageIndex: number;
+  KeyWord?: string;
 }
 
 export interface IModuleListSection {
@@ -1320,4 +1392,14 @@ export interface IModuleListSection {
   createdBy: number;
   createdDate: string;
   lastModifiedDate: string;
+}
+
+export interface IModuleListItem {
+  section: IModuleListSection;
+  departmentName: string;
+}
+
+export interface IModuleListResponse {
+  count: number;
+  result: IModuleListItem[];
 }

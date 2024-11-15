@@ -1,4 +1,4 @@
-import { ISearchParams } from "@/services/dtos/upload";
+import { ISearchParams } from "@/services/dtos/public";
 
 export const replaceWithLatest = (
   newValue: { [key: string]: boolean },
