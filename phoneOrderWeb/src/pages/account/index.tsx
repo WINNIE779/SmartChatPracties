@@ -90,7 +90,7 @@ export const AccountList = () => {
   ];
 
   return (
-    <div className="p-4 h-screen">
+    <div className="p-4 h-screen overflow-y-auto no-scrollbar">
       <div
         className="flex items-center w-[3.4rem] cursor-pointer"
         onClick={handleReturn}

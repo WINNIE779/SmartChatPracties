@@ -254,44 +254,28 @@ export const useAction = () => {
     });
   };
 
-  // const getHeight = () => {
-  //   const h =
-  //     document.body.clientHeight -
-  //     document.getElementsByClassName("header-top")[0]?.getBoundingClientRect()
-  //       .height -
-  //     48 -
-  //     document
-  //       .getElementsByClassName("ant-table-thead")[0]
-  //       ?.getBoundingClientRect().height;
-  //   setHeight(h);
-  // };
-
   const getHeight = () => {
-    const bodyHeight = document.body.clientHeight;
+    const bodyHeight = document.body.clientHeight; // 获取页面的可视高度
     const headerHeight =
       document.getElementsByClassName("header-top")[0]?.getBoundingClientRect()
-        ?.height || 0;
+        ?.height || 0; // 获取头部高度
     const tableHeadHeight =
       document
         .getElementsByClassName("ant-table-thead")[0]
-        ?.getBoundingClientRect()?.height || 0;
+        ?.getBoundingClientRect()?.height || 0; // 获取表格头部高度
 
-    console.log("bodyHeight:", bodyHeight);
-
-    console.log("headerHeight:", headerHeight);
-    console.log("tableHeadHeight:", tableHeadHeight);
-
-    const h = bodyHeight - headerHeight - 64 - 64 - 48 - tableHeadHeight;
-    console.log("calculated height (h):", h);
-
-    setHeight(h > 0 ? h : 0); // 确保高度有效
+    const h = bodyHeight - headerHeight - 64 - 64 - 48 - tableHeadHeight; // 动态计算剩余的可用高度
+    setHeight(h > 0 ? h : 0); // 如果高度计算结果为负数，设置为0；否则更新高度状态
   };
 
   useEffect(() => {
-    getHeight();
-    window.addEventListener("resize", getHeight);
+    getHeight(); // 页面加载完成后计算表格高度
 
-    return window.removeEventListener("reset", getHeight);
+    window.addEventListener("resize", getHeight); // 监听窗口大小变化，动态更新表格高度
+
+    return () => {
+      window.removeEventListener("resize", getHeight); // 在组件卸载时移除事件监听，防止内存泄漏
+    };
   }, []);
 
   return {
