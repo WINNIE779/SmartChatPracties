@@ -1,87 +1,112 @@
 import { LeftOutlined } from "@ant-design/icons";
-import { Button, Table, Form, Radio, Input } from "antd";
+import { Button, Table, Form, Radio, Input, Pagination } from "antd";
 import Search from "antd/es/input/Search";
 import Modal from "antd/es/modal/Modal";
-import type { ColumnsType } from "antd/es/table";
 import { useAction } from "./hook";
-import { IAccountDataProps, ModalTypeEnum, RoleEnum, RoleMap } from "./props";
 import { CustomMessage } from "@/components/custom-message";
+import { IRole, IUserAccount } from "@/services/api/conversation/dto";
+import dayjs from "dayjs";
+import { useNavigate } from "react-router-dom";
 
 export const AccountList = () => {
+  const navigate = useNavigate();
+
   const {
     form,
-    openDeletePopups,
+    tableWrapperRef,
     messageText,
-    dataSource,
-    paginationDtos,
-    openModal,
-    modalType,
     height,
-    handleModalOk,
-    handleCopy,
-    handleReturn,
-    canDelete,
-    canModifyRole,
-    handleDeleteAccount,
-    handleOpenDeleteOk,
-    handleModifyRole,
-    handleCancel,
-    handleCreateAccount,
+    accountDto,
+    handleCopyUser,
+    modalDto,
+    roleDto,
+    handleDeleteUser,
+    getAccountListRequest,
+    handleCreateOrEditUser,
+    handleChangeErrorDto,
+    handleChangeModalDto,
+    handleChangeAccountDto,
   } = useAction();
 
-  const columns: ColumnsType<IAccountDataProps> = [
+  const columns = [
     {
       title: "賬號名稱",
-      dataIndex: "accountName",
-      key: "accountName",
+      dataIndex: "userName",
+      key: "userName",
       width: 150,
-      align: "center",
     },
     {
       title: "角色",
-      dataIndex: "role",
-      key: "role",
+      dataIndex: "roles",
+      key: "roles",
       width: 200,
-      align: "center",
-      render: (role: RoleEnum) => RoleMap[role],
+
+      render: (record: IRole[]) => {
+        return (
+          <div className="truncate">
+            {record.map((item) => item.displayName).join(" ")}
+          </div>
+        );
+      },
     },
     {
       title: "創建時間",
-      dataIndex: "creatTime",
-      key: "creatTime",
+      dataIndex: "createdOn",
+      key: "createdOn",
       width: 200,
-      align: "center",
+
+      render: (record: string) => {
+        return dayjs.utc(record).format("MM/DD/YYYY HH:mm:ss");
+      },
     },
     {
       title: "創建人",
-      dataIndex: "creator",
-      key: "creator",
+      dataIndex: "lastModifiedByName",
+      key: "lastModifiedByName",
       width: 200,
-      align: "center",
     },
     {
       title: "操作",
-      dataIndex: "operate",
-      key: "operate",
-      width: 200,
-      align: "center",
-      render: (_, record) => (
-        <div className="flex justify-evenly flex-wrap">
+      dataIndex: "fuction",
+      width: 400,
+      render: (_: any, record: IUserAccount) => (
+        <div className="flex space-x-4">
           <Button
-            onClick={() => handleOpenDeleteOk(record)}
-            disabled={canDelete(record)}
+            className={`flex-1 cursor-pointer p-2 rounded-lg items-center flex justify-center border-gray-400 border border-solid`}
+            onClick={() => {
+              handleChangeModalDto({
+                type: "delete",
+                visible: true,
+                name: record.userName,
+                roleId: record?.roles[0]?.id ?? null,
+                userId: record?.id,
+              });
+            }}
           >
             刪除賬號
           </Button>
 
           <Button
-            onClick={() => handleModifyRole(record)}
-            disabled={canModifyRole(record)}
+            className={`flex-1 cursor-pointer p-2 rounded-lg items-center flex justify-center border-gray-400 border border-solid`}
+            onClick={() => {
+              handleChangeModalDto({
+                type: "edit",
+                name: record.userName,
+                roleId: record?.roles[0]?.id ?? null,
+                oldName: record.userName,
+                oldRoleId: record?.roles[0]?.id ?? null,
+                userId: record?.id,
+                visible: true,
+              });
+            }}
           >
             修改角色
           </Button>
 
-          <Button onClick={() => handleCopy(record.accountName, record.key)}>
+          <Button
+            className={`flex-1 cursor-pointer p-2 rounded-lg items-center flex justify-center border-gray-400 border border-solid`}
+            onClick={() => handleCopyUser(record.id)}
+          >
             複製信息
           </Button>
         </div>
@@ -90,10 +115,10 @@ export const AccountList = () => {
   ];
 
   return (
-    <div className="p-4 h-screen overflow-y-auto no-scrollbar">
+    <div className="w-screen h-screen p-4 bg-[#f9fafb] flex flex-col no-scrollbar">
       <div
         className="flex items-center w-[3.4rem] cursor-pointer"
-        onClick={handleReturn}
+        onClick={() => navigate(-1)}
       >
         <LeftOutlined style={{ fontSize: "1.25rem" }} />
         返回
@@ -102,63 +127,207 @@ export const AccountList = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center p-6">
           <div className="pr-3">账号管理列表</div>
-          <Search placeholder="搜索" style={{ width: "12.5rem" }} />
+          <Search
+            placeholder="搜索"
+            style={{ width: "12.5rem" }}
+            value={accountDto.userName}
+            onChange={(e) =>
+              handleChangeAccountDto({
+                userName: e.target.value,
+              })
+            }
+          />
         </div>
 
-        <Button onClick={() => handleCreateAccount()}>创建账号</Button>
+        <Button
+          onClick={() =>
+            handleChangeModalDto({
+              type: "add",
+              visible: true,
+            })
+          }
+        >
+          创建账号
+        </Button>
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={dataSource}
-        scroll={{ y: height }}
-        pagination={{
-          total: dataSource.length,
-          pageSize: paginationDtos.pageSize,
-          defaultCurrent: paginationDtos.pageIndex,
-          showQuickJumper: true,
-          showSizeChanger: true,
-          className: "flex fixed bottom-20 right-6",
-          onChange: (pageIndex, pageSize) => {
-            console.log(pageIndex, pageSize);
-          },
-        }}
-      />
+      <div
+        className="h-[calc(100%-140px)] border border-solid border-gray-400 rounded-lg overflow-y-auto no-scrollbar"
+        ref={tableWrapperRef}
+      >
+        <Table
+          loading={accountDto.loading}
+          dataSource={accountDto.userAccounts}
+          columns={columns}
+          scroll={{ y: height, x: 1200 }}
+          pagination={false}
+          rowKey={(record) => record.id}
+        />
+      </div>
+
+      <div className="h-[50px] flex justify-end items-center">
+        <Pagination
+          showQuickJumper
+          showSizeChanger
+          total={accountDto.count}
+          current={accountDto.pageIndex}
+          pageSize={accountDto.pageSize}
+          onChange={(pageIndex, pageSize) => {
+            getAccountListRequest.run(pageIndex, pageSize, accountDto.userName);
+          }}
+        />
+      </div>
 
       {messageText && (
         <CustomMessage text={messageText} bgColor="bg-[#00ab60]" />
       )}
 
       <Modal
-        open={openModal}
-        onOk={handleModalOk}
-        onCancel={handleCancel}
-        title={modalType === ModalTypeEnum.Create ? "創建賬號" : "修改角色"}
+        // 创建or修改modal
+        open={modalDto.visible && modalDto.type !== "delete"}
+        destroyOnClose
+        centered
+        title={
+          modalDto.type !== "delete" && modalDto.type === "add" ? (
+            <div className="p-4">創建賬號</div>
+          ) : (
+            <div className="p-4">修改角色"</div>
+          )
+        }
+        footer={
+          <div className="w-full flex cursor-pointer border-t border-solid border-gray-400">
+            <div
+              className="flex-1 text-center py-3 select-none font-semibold"
+              onClick={() => {
+                !modalDto.loading &&
+                  handleChangeModalDto({
+                    type: null,
+                    visible: false,
+                    name: "",
+                    roleId:
+                      roleDto.roles.find((item) => item.name === "User")?.id ??
+                      null,
+                    oldRoleId: null,
+                    oldName: "",
+                  });
+              }}
+            >
+              取消
+            </div>
+            <div className="w-[1px] h-[46px] py-3 bg-gray-400"></div>
+            <div
+              className="flex-1 text-center py-3 select-none font-semibold"
+              onClick={() => handleCreateOrEditUser()}
+            >
+              {modalDto.type === "add"
+                ? "創建"
+                : modalDto.type === "edit"
+                ? "保存"
+                : ""}
+            </div>
+          </div>
+        }
+        closeIcon={false}
+        styles={{
+          body: {
+            padding: "5px 30px",
+          },
+          content: {
+            padding: "0px",
+          },
+        }}
       >
         <Form form={form} layout="vertical">
           <Form.Item
             label="賬號名稱"
-            name="accountName"
+            name="userName"
             rules={[{ required: true, message: "賬號名稱不能为空" }]}
           >
-            <Input />
+            <Input
+              placeholder={modalDto.type === "add" ? "" : modalDto.name}
+              value={modalDto.name}
+              disabled={modalDto.type === "edit"}
+              onChange={(e) => {
+                if (!modalDto.loading) {
+                  handleChangeErrorDto({ empty: false, same: false });
+                  handleChangeModalDto({
+                    name: e.target.value.replace(/[^a-zA-Z]/g, ""),
+                  });
+                }
+              }}
+            />
           </Form.Item>
           <Form.Item label="角色" name="角色">
-            <Radio.Group defaultValue="操作員">
-              <Radio value="操作員">{RoleMap[0]}</Radio>
-              <Radio value="管理員">{RoleMap[1]}</Radio>
+            <Radio.Group
+              value={modalDto.roleId}
+              onChange={(e) =>
+                !modalDto.loading &&
+                handleChangeModalDto({
+                  roleId: e.target.value,
+                })
+              }
+            >
+              {roleDto.roles.map((item) => (
+                <Radio
+                  key={item.id}
+                  value={item.id}
+                  disabled={item.name === "Administrator"}
+                >
+                  {item.displayName}
+                </Radio>
+              ))}
             </Radio.Group>
           </Form.Item>
         </Form>
       </Modal>
 
       <Modal
-        open={openDeletePopups}
-        onOk={handleDeleteAccount}
-        onCancel={handleCancel}
-        title="確認提示"
+        // 删除modal
+        open={modalDto.visible && modalDto.type === "delete"}
+        centered
+        closeIcon={false}
+        title={<div className="select-none p-3">確認提示</div>}
+        footer={
+          <div className="w-full flex cursor-pointer border-t border-solid border-gray-400">
+            <div
+              className="flex-1 text-center py-3 select-none font-semibold"
+              onClick={() => {
+                !modalDto.loading &&
+                  handleChangeModalDto({
+                    type: null,
+                    visible: false,
+                    name: "",
+                    roleId:
+                      roleDto.roles.find((item) => item.name === "User")?.id ??
+                      null,
+                    oldRoleId: null,
+                    oldName: "",
+                  });
+              }}
+            >
+              取消
+            </div>
+            <div className="w-[1px] h-[46px] py-3 bg-gray-400"></div>
+            <div
+              className="flex-1 text-center py-3 select-none font-semibold"
+              onClick={() => {
+                !modalDto.loading && handleDeleteUser();
+              }}
+            >
+              <div>確認</div>
+            </div>
+          </div>
+        }
+        styles={{
+          body: {
+            padding: "5px 30px",
+          },
+          content: {
+            padding: "0px",
+          },
+        }}
       >
-        <div>您確認要刪除此賬號嗎？</div>
+        您確認要刪除此賬號嗎？
       </Modal>
     </div>
   );

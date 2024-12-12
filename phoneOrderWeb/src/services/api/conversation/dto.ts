@@ -1,4 +1,5 @@
 import enumArray from "enum-array";
+import { SystemSource } from "../account/dto";
 
 export interface IRecordItem {
   id: number;
@@ -51,7 +52,7 @@ export interface IRole {
   modifiedDate: string;
   name: string;
   displayName: string;
-  systemSource: number;
+  systemSource: SystemSource;
   description: string;
   isSystem: boolean;
 }

@@ -1,10 +1,10 @@
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { BrowserRouter } from "react-router-dom";
-
 import { useAction } from "./app-hook";
 import { Router } from "./routes";
 import { AuthProvider } from "./hooks/auth-provider";
+import { ConfigProvider } from "antd";
 
 dayjs.extend(utc);
 
@@ -14,7 +14,9 @@ function App() {
   return isLoaded ? (
     <BrowserRouter>
       <AuthProvider>
-        <Router />
+        <ConfigProvider>
+          <Router />
+        </ConfigProvider>
       </AuthProvider>
     </BrowserRouter>
   ) : (

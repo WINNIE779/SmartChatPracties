@@ -1,301 +1,469 @@
 import { Form } from "antd";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { IError, IModalDto } from "./props";
 import {
-  IAccountDataProps,
-  IPaginationProps,
-  ModalTypeEnum,
-  RoleEnum,
-} from "./props";
+  IAccount,
+  IGetRole,
+  IPageDtos,
+  SystemSource,
+} from "@/services/api/account/dto";
+import {
+  useDebounceEffect,
+  useDebounceFn,
+  useMemoizedFn,
+  useRequest,
+  useUpdateEffect,
+} from "ahooks";
+import {
+  getAccountList,
+  getCopyUser,
+  getRoleList,
+  postCreateUser,
+  postDeleteUser,
+  postUpdateUser,
+} from "@/services/api/account";
+import { isEmpty, isNil } from "ramda";
+import { isPermissionRevoked } from "@/components/custom-message";
+
+interface IAccountDto extends IPageDtos, IAccount {
+  loading: boolean;
+}
+
+const defaultRole: IGetRole = {
+  count: 0,
+  roles: [],
+};
+
+const defaultAccount: IAccountDto = {
+  loading: false,
+  count: 0,
+  userAccounts: [],
+  pageIndex: 1,
+  pageSize: 20,
+  userName: "",
+};
+
+const defaultModal: IModalDto = {
+  type: null,
+  visible: false,
+  name: "",
+  roleId: null,
+  oldName: "",
+  oldRoleId: null,
+  userId: null,
+  loading: false,
+};
+
+const defaultError: IError = {
+  same: false,
+  empty: false,
+};
 
 export const useAction = () => {
-  const navigate = useNavigate();
-
-  const handleReturn = () => {
-    navigate("/");
-  };
+  const tableWrapperRef = useRef<HTMLDivElement>(null);
 
   const [form] = Form.useForm();
 
-  const [openModal, setOpenModal] = useState<boolean>(false);
+  const [modalDto, setModalDto] = useState<IModalDto>(defaultModal);
 
-  const [modalType, setModalType] = useState<ModalTypeEnum | null>(null);
+  const [roleDto, setRoleDto] = useState<IGetRole>(defaultRole);
+
+  const [accountDto, setAccountDto] = useState<IAccountDto>(defaultAccount);
+
+  const [errorDto, setErrorDto] = useState<IError>(defaultError);
+
+  const [endSearchText, setEndSearchText] = useState<string>("");
+
+  const [openModal, setOpenModal] = useState<boolean>(false);
 
   const [openDeletePopups, setOpenDeletePopups] = useState<boolean>(false);
 
-  const [selectedAccount, setSelectedAccount] =
-    useState<IAccountDataProps | null>(null);
-
   const [messageText, setMessageText] = useState<string>("");
+
+  const [messageBgColor, setMessageBgColor] = useState<string>("");
 
   const [height, setHeight] = useState<number>(0);
 
-  const [dataSource, setDataSource] = useState<IAccountDataProps[]>([
-    {
-      key: "1",
-      accountName: "Synthia",
-      role: RoleEnum.Operator,
-      creatTime: "10/29/2024 01:57:11",
-      creator: "Minmin",
-    },
-    {
-      key: "2",
-      accountName: "LuHan",
-      role: RoleEnum.Admin,
-      creatTime: "12/29/2024 01:57:11",
-      creator: "Minmin",
-    },
-    {
-      key: "4",
-      accountName: "Minmin",
-      role: RoleEnum.SuperAdmin,
-      creatTime: "12/29/2023 01:57:11",
-      creator: "/",
-    },
-    {
-      key: "5",
-      accountName: "Synthia",
-      role: RoleEnum.Operator,
-      creatTime: "10/29/2024 01:57:11",
-      creator: "Minmin",
-    },
-    {
-      key: "6",
-      accountName: "LuHan",
-      role: RoleEnum.Admin,
-      creatTime: "12/29/2024 01:57:11",
-      creator: "Minmin",
-    },
-    {
-      key: "7",
-      accountName: "Minmin",
-      role: RoleEnum.SuperAdmin,
-      creatTime: "12/29/2023 01:57:11",
-      creator: "/",
-    },
-    {
-      key: "8",
-      accountName: "Synthia",
-      role: RoleEnum.Operator,
-      creatTime: "10/29/2024 01:57:11",
-      creator: "Minmin",
-    },
-    {
-      key: "9",
-      accountName: "LuHan",
-      role: RoleEnum.Admin,
-      creatTime: "12/29/2024 01:57:11",
-      creator: "Minmin",
-    },
-    {
-      key: "10",
-      accountName: "Minmin",
-      role: RoleEnum.SuperAdmin,
-      creatTime: "12/29/2023 01:57:11",
-      creator: "/",
-    },
-    {
-      key: "1",
-      accountName: "Synthia",
-      role: RoleEnum.Operator,
-      creatTime: "10/29/2024 01:57:11",
-      creator: "Minmin",
-    },
-    {
-      key: "2",
-      accountName: "LuHan",
-      role: RoleEnum.Admin,
-      creatTime: "12/29/2024 01:57:11",
-      creator: "Minmin",
-    },
-    {
-      key: "4",
-      accountName: "Minmin",
-      role: RoleEnum.SuperAdmin,
-      creatTime: "12/29/2023 01:57:11",
-      creator: "/",
-    },
-    {
-      key: "5",
-      accountName: "Synthia",
-      role: RoleEnum.Operator,
-      creatTime: "10/29/2024 01:57:11",
-      creator: "Minmin",
-    },
-  ]);
-
-  const [paginationDtos, setPaginationDtos] = useState<IPaginationProps>({
+  const [paginationDtos, setPaginationDtos] = useState<IPageDtos>({
     pageIndex: 1,
     pageSize: 8,
-    keyWord: "",
+    userName: "",
   });
 
-  // 假设当前登陆的角色
-  const currentUserRole = RoleEnum.SuperAdmin;
+  const [copyDto, setCopyDto] = useState<{
+    id: number | null;
+    loading: boolean;
+  }>({
+    id: null,
+    loading: false,
+  });
 
-  // 假设当前登陆的账号名
-  const currentUserAccountName = "LuHan";
+  const handleChangeModalDto = useMemoizedFn((data: Partial<IModalDto>) => {
+    setModalDto((prev) => ({
+      ...prev,
+      ...data,
+    }));
+  });
 
-  //创建账号
-  const handleCreateAccount = () => {
-    setOpenModal(true);
-    form.resetFields();
-    setModalType(ModalTypeEnum.Create);
-  };
+  const handleChangeAccountDto = useMemoizedFn((data: Partial<IAccountDto>) => {
+    setAccountDto((prev) => ({
+      ...prev,
+      ...data,
+    }));
+  });
 
-  //账号创建or修改角色成功
-  const handleModalOk = async () => {
-    try {
-      const values = await form.validateFields();
+  const handleChangeErrorDto = useMemoizedFn((data: Partial<IError>) => {
+    setErrorDto((prev) => ({
+      ...prev,
+      ...data,
+    }));
+  });
 
-      if (modalType === ModalTypeEnum.Create) {
-        const newAccount: IAccountDataProps = {
-          key: `${dataSource.length + 1}`,
-          ...values,
-        };
-        setDataSource([...dataSource, newAccount]); // 添加到表格数据中
-        showMessage("成功创建账号！");
-      } else if (modalType === ModalTypeEnum.Modify && selectedAccount) {
-        const updatedDataSource = dataSource.map((item) =>
-          item.key === selectedAccount.key ? { ...item, ...values } : item
-        );
-        setDataSource(updatedDataSource);
-        setSelectedAccount(null);
-        showMessage("成功修改角色！");
+  //删除账号
+  const { run: handleDeleteUser } = useDebounceFn(
+    useMemoizedFn(() => {
+      if (isNil(modalDto.userId)) {
+        return;
       }
 
-      setOpenModal(false); // 关闭模态框
-    } catch (error) {
-      console.error("表单验证失败:", error);
+      handleChangeModalDto({
+        loading: true,
+      });
+
+      postDeleteUser({
+        userId: modalDto.userId!,
+        roleId: modalDto.roleId!,
+        userName: modalDto.name,
+      })
+        .then(() => {
+          handleChangeModalDto({
+            ...defaultModal,
+            roleId:
+              roleDto?.roles.find((item) => item.name === "User")?.id ?? null,
+          });
+
+          getAccountListRequest.run(1, accountDto.pageSize, endSearchText);
+
+          showMessage("角色刪除成功!", "green");
+        })
+        .catch((error) => {
+          if (error !== "Unauthorized") {
+            isPermissionRevoked(error)
+              ? showMessage(`您已無權限進行操作`, "red")
+              : showMessage(`角色刪除失敗,失敗原因:${error}`, "red");
+          }
+        })
+        .finally(() => {
+          handleChangeModalDto({
+            loading: false,
+          });
+        });
+    }),
+    {
+      wait: 500,
     }
-  };
+  );
 
-  //角色修改
-  const handleModifyRole = (record: IAccountDataProps) => {
-    setSelectedAccount(record);
+  // 复制账号信息
+  const { run: handleCopyUser } = useDebounceFn(
+    useMemoizedFn(async (id: number) => {
+      if (!isNil(id)) {
+        setCopyDto({
+          id,
+          loading: true,
+        });
 
-    form.setFieldsValue({
-      accountName: record.accountName,
-      role: record.role,
-    });
+        await getCopyUser({ userId: id })
+          .then(async (res) => {
+            if (res) {
+              try {
+                await navigator.clipboard.writeText(
+                  `帳號:${res?.userName}，密碼:${res?.passWord}`
+                );
 
-    setOpenModal(true);
-
-    setModalType(ModalTypeEnum.Modify);
-  };
-
-  //角色修改权限
-  const canModifyRole = (record: IAccountDataProps) => {
-    if (record.role === currentUserRole) {
-      return record.accountName !== currentUserAccountName;
-    } else if (record.role === RoleEnum.Admin) {
-      return;
-    }
-    return false;
-  };
-
-  //删除账号完成
-  const handleDeleteAccount = () => {
-    if (selectedAccount) {
-      const updatedDataSource = dataSource.filter(
-        (item) => item.key !== selectedAccount.key
-      );
-
-      if (selectedAccount.accountName === currentUserAccountName) {
-        navigate("/");
+                showMessage("已複製！", "bg-green-500");
+              } catch {
+                showMessage("複製失敗！", "bg-red-500");
+              }
+            } else {
+              showMessage("複製失敗,失敗原因:獲取不到帳號密碼!", "bg-red-500");
+            }
+          })
+          .catch((error) => {
+            if (error !== "Unauthorized") {
+              isPermissionRevoked(error)
+                ? showMessage(`您已無權限進行操作`, "bg-red-500")
+                : showMessage(`複製失敗,失敗原因:${error}`, "bg-red-500");
+            }
+          })
+          .finally(() => {
+            setCopyDto({
+              id: null,
+              loading: false,
+            });
+          });
       }
-
-      setDataSource(updatedDataSource);
-
-      setOpenDeletePopups(false);
-
-      showMessage("成功刪除帳號！");
+    }),
+    {
+      wait: 500,
     }
-  };
+  );
 
-  //刪除權限
-  const canDelete = (record: IAccountDataProps) => {
-    if (record.role === currentUserRole) {
-      return record.accountName !== currentUserAccountName;
-    } else if (record.role) {
-      return;
+  const getRoleListRequest = useMemoizedFn(() => {
+    getRoleList({
+      pageIndex: 1,
+      pageSize: 2147483647,
+      keyWord: "",
+      systemSource: SystemSource.SmartTalk,
+    })
+      .then((res) => {
+        const fliterData = res?.roles
+          .reverse()
+          .filter((item: any) => item.name !== "SuperAdministrator");
+
+        setRoleDto({
+          count: fliterData?.length ?? 0,
+          roles: fliterData ?? [],
+        });
+
+        handleChangeModalDto({
+          roleId:
+            fliterData.find((item: any) => item.name === "User")?.id ?? null,
+        });
+      })
+      .catch((error) => {
+        if (isPermissionRevoked(error))
+          showMessage(`您已無權限進行操作`, "red");
+
+        setRoleDto(defaultRole);
+      });
+  });
+
+  const { run: handleCreateOrEditUser } = useDebounceFn(
+    useMemoizedFn(() => {
+      if (modalDto.type === null) {
+        return;
+      } else if (modalDto.type === "add") {
+        if (isEmpty(modalDto.name) || isNil(modalDto.roleId)) {
+          handleChangeErrorDto({
+            empty: true,
+          });
+
+          return;
+        }
+
+        handleChangeModalDto({
+          loading: true,
+        });
+
+        postCreateUser({
+          userName: modalDto.name,
+          roleId: modalDto.roleId!,
+        })
+          .then(() => {
+            handleChangeModalDto({
+              ...defaultModal,
+              roleId:
+                roleDto?.roles.find((item) => item.name === "User")?.id ?? null,
+            });
+
+            getAccountListRequest.run(1, accountDto.pageSize, endSearchText);
+
+            handleChangeErrorDto(defaultError);
+
+            showMessage("角色創建成功!", "green");
+          })
+          .catch((error) => {
+            if (error !== "Unauthorized") {
+              const isHaveSameUser = error.includes(
+                "An error occurred while saving the entity changes. See the inner exception for details."
+              );
+
+              isHaveSameUser
+                ? handleChangeErrorDto({
+                    same: true,
+                  })
+                : isPermissionRevoked(error)
+                ? showMessage(`您已無權限進行操作`, "red")
+                : showMessage(`角色創建失敗,失敗原因:${error}`, "red");
+            }
+          })
+          .finally(() => {
+            handleChangeModalDto({
+              loading: false,
+            });
+          });
+      } else {
+        if (isNil(modalDto.userId)) {
+          return;
+        }
+
+        handleChangeModalDto({
+          loading: true,
+        });
+
+        postUpdateUser({
+          userId: modalDto.userId!,
+          oldRoleId: modalDto.oldRoleId!,
+          newRoleId: modalDto.roleId!,
+        })
+          .then(() => {
+            handleChangeModalDto({
+              ...defaultModal,
+              roleId:
+                roleDto?.roles.find((item) => item.name === "User")?.id ?? null,
+            });
+
+            getAccountListRequest.run(1, accountDto.pageSize, endSearchText);
+
+            handleChangeErrorDto(defaultError);
+
+            showMessage("角色更改成功!", "green");
+          })
+          .catch((error) => {
+            if (error !== "Unauthorized") {
+              const isHasSameUser = (error as string).includes(
+                "An error occurred while saving the entity changes. See the inner exception for details."
+              );
+
+              if (isHasSameUser) {
+                handleChangeErrorDto({
+                  same: true,
+                });
+              } else {
+                isPermissionRevoked(error)
+                  ? showMessage(`您已無權限進行操作`, "red")
+                  : showMessage(`角色更改失敗,失敗原因:${error}`, "red");
+              }
+            }
+          })
+          .finally(() => {
+            handleChangeModalDto({
+              loading: false,
+            });
+          });
+      }
+    }),
+    {
+      wait: 500,
     }
-
-    return false;
-  };
-
-  //删除賬號
-  const handleOpenDeleteOk = (record: IAccountDataProps) => {
-    setSelectedAccount(record);
-    setOpenDeletePopups(true);
-  };
-
-  //取消
-  const handleCancel = () => {
-    setOpenModal(false);
-    setOpenDeletePopups(false);
-  };
+  );
 
   // 顯示操作提示信息
-  const showMessage = (text: string) => {
+  const showMessage = (text: string, bgColor: string) => {
     setMessageText(text);
+    setMessageBgColor(bgColor);
 
     setTimeout(() => {
       setMessageText("");
-    }, 1000);
+    }, 1500);
   };
 
-  //複製賬號信息
-  const handleCopy = (accountName: string, password: string) => {
-    const content = `账号: ${accountName}, 密码: ${password}`;
+  const getAccountListReq = useMemoizedFn(
+    async (
+      pageIndex: number = 1,
+      pageSize: number = 20,
+      keyWord: string = ""
+    ) => {
+      await getAccountList({
+        pageIndex,
+        pageSize,
+        userName: keyWord,
+      })
+        .then((res) => {
+          handleChangeAccountDto({
+            pageIndex,
+            pageSize,
+            count: res?.count ?? 0,
+            userAccounts: res?.userAccounts ?? [],
+          });
+        })
+        .catch(() => {
+          handleChangeAccountDto({
+            pageIndex,
+            pageSize,
+            count: 0,
+            userAccounts: [],
+          });
+        });
+    }
+  );
 
-    navigator.clipboard.writeText(content).then(() => {
-      showMessage("已複製！");
-    });
-  };
+  const getAccountListRequest = useRequest(getAccountListReq, {
+    manual: true,
+    debounceWait: 1000,
+    onBefore: () => {
+      handleChangeAccountDto({ loading: true });
+    },
+    onFinally: () => {
+      handleChangeAccountDto({ loading: false });
+    },
+  });
 
-  const getHeight = () => {
-    const bodyHeight = document.body.clientHeight; // 获取页面的可视高度
-    const headerHeight =
-      document.getElementsByClassName("header-top")[0]?.getBoundingClientRect()
-        ?.height || 0; // 获取头部高度
-    const tableHeadHeight =
-      document
-        .getElementsByClassName("ant-table-thead")[0]
-        ?.getBoundingClientRect()?.height || 0; // 获取表格头部高度
+  useDebounceEffect(
+    () => {
+      setEndSearchText(accountDto.userName);
+    },
+    [accountDto.userName],
+    {
+      wait: 500,
+    }
+  );
 
-    const h = bodyHeight - headerHeight - 64 - 64 - 48 - tableHeadHeight; // 动态计算剩余的可用高度
-    setHeight(h > 0 ? h : 0); // 如果高度计算结果为负数，设置为0；否则更新高度状态
-  };
-
+  //获取页面高度
   useEffect(() => {
-    getHeight(); // 页面加载完成后计算表格高度
+    const handleResize = () => {
+      //  ant-table-header 的高度
+      const tableHeaderElement = document.querySelector(".ant-table-header");
 
-    window.addEventListener("resize", getHeight); // 监听窗口大小变化，动态更新表格高度
+      if (tableWrapperRef.current && tableHeaderElement) {
+        setHeight(
+          tableWrapperRef.current.offsetHeight -
+            tableHeaderElement.clientHeight -
+            2
+        );
+      }
+    };
+
+    handleResize();
+
+    getAccountListRequest.run();
+
+    getRoleListRequest();
+
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("resize", getHeight); // 在组件卸载时移除事件监听，防止内存泄漏
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
+  useUpdateEffect(() => {
+    getAccountListRequest.run(1, accountDto.pageSize, endSearchText);
+  }, [endSearchText]);
+
   return {
     form,
-    openDeletePopups,
-    messageText,
-    dataSource,
-    paginationDtos,
-    openModal,
-    modalType,
     height,
-    handleModalOk,
-    handleCopy,
-    handleReturn,
-    canDelete,
-    canModifyRole,
-    handleDeleteAccount,
-    handleOpenDeleteOk,
-    handleModifyRole,
-    handleCancel,
-    handleCreateAccount,
+    copyDto,
+    roleDto,
+    errorDto,
+    modalDto,
+    openModal,
+    accountDto,
+    messageText,
+    paginationDtos,
+    handleCopyUser,
+    tableWrapperRef,
+    openDeletePopups,
+    handleDeleteUser,
+    getAccountListRequest,
+    handleCreateOrEditUser,
+    setCopyDto,
+    setAccountDto,
+    getRoleListRequest,
+    handleChangeModalDto,
+    handleChangeAccountDto,
+    handleChangeErrorDto,
   };
 };
