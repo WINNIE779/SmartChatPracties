@@ -83,7 +83,7 @@ const convertItem = (item: IConversationItem) => {
 };
 
 export const Main = () => {
-  const { signOut, userName } = useAuth();
+  const { signOut, userName, isCanEnterAccountList } = useAuth();
 
   const {
     tipRef,
@@ -546,6 +546,7 @@ export const Main = () => {
         </div>
       ),
       key: "accountManagement",
+      disabled: !isCanEnterAccountList,
     },
     {
       label: "sign out",

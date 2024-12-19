@@ -11,7 +11,6 @@ import {
   useDebounceEffect,
   useDebounceFn,
   useMemoizedFn,
-  useRequest,
   useUpdateEffect,
 } from "ahooks";
 import {
@@ -25,9 +24,7 @@ import {
 import { isEmpty, isNil } from "ramda";
 import { isPermissionRevoked } from "@/components/custom-message";
 
-interface IAccountDto extends IPageDtos, IAccount {
-  loading: boolean;
-}
+type IAccountDto = IPageDtos & IAccount;
 
 const defaultRole: IGetRole = {
   count: 0,
@@ -35,7 +32,6 @@ const defaultRole: IGetRole = {
 };
 
 const defaultAccount: IAccountDto = {
-  loading: false,
   count: 0,
   userAccounts: [],
   pageIndex: 1,
@@ -51,7 +47,6 @@ const defaultModal: IModalDto = {
   oldName: "",
   oldRoleId: null,
   userId: null,
-  loading: false,
 };
 
 const defaultError: IError = {
@@ -60,35 +55,27 @@ const defaultError: IError = {
 };
 
 export const useAction = () => {
-  const tableWrapperRef = useRef<HTMLDivElement>(null);
-
   const [form] = Form.useForm();
 
-  const [modalDto, setModalDto] = useState<IModalDto>(defaultModal);
+  const tableWrapperRef = useRef<HTMLDivElement>(null);
+
+  const [loading, setLoading] = useState<boolean>(false);
 
   const [roleDto, setRoleDto] = useState<IGetRole>(defaultRole);
 
+  const [modalDto, setModalDto] = useState<IModalDto>(defaultModal);
+
   const [accountDto, setAccountDto] = useState<IAccountDto>(defaultAccount);
-
-  const [errorDto, setErrorDto] = useState<IError>(defaultError);
-
-  const [endSearchText, setEndSearchText] = useState<string>("");
-
-  const [openModal, setOpenModal] = useState<boolean>(false);
-
-  const [openDeletePopups, setOpenDeletePopups] = useState<boolean>(false);
 
   const [messageText, setMessageText] = useState<string>("");
 
   const [messageBgColor, setMessageBgColor] = useState<string>("");
 
-  const [height, setHeight] = useState<number>(0);
+  const [errorDto, setErrorDto] = useState<IError>(defaultError);
 
-  const [paginationDtos, setPaginationDtos] = useState<IPageDtos>({
-    pageIndex: 1,
-    pageSize: 8,
-    userName: "",
-  });
+  const [endSearchText, setEndSearchText] = useState<string>("");
+
+  const [height, setHeight] = useState<number>(0);
 
   const [copyDto, setCopyDto] = useState<{
     id: number | null;
@@ -98,37 +85,23 @@ export const useAction = () => {
     loading: false,
   });
 
-  const handleChangeModalDto = useMemoizedFn((data: Partial<IModalDto>) => {
-    setModalDto((prev) => ({
-      ...prev,
-      ...data,
-    }));
-  });
+  const showMessage = (text: string, bgColor: string) => {
+    setMessageText(text);
+    setMessageBgColor(bgColor);
 
-  const handleChangeAccountDto = useMemoizedFn((data: Partial<IAccountDto>) => {
-    setAccountDto((prev) => ({
-      ...prev,
-      ...data,
-    }));
-  });
-
-  const handleChangeErrorDto = useMemoizedFn((data: Partial<IError>) => {
-    setErrorDto((prev) => ({
-      ...prev,
-      ...data,
-    }));
-  });
+    setTimeout(() => {
+      setMessageText("");
+    }, 1500);
+  };
 
   //删除账号
-  const { run: handleDeleteUser } = useDebounceFn(
+  const { run: handleDeleteAccount } = useDebounceFn(
     useMemoizedFn(() => {
       if (isNil(modalDto.userId)) {
         return;
       }
 
-      handleChangeModalDto({
-        loading: true,
-      });
+      setLoading(true);
 
       postDeleteUser({
         userId: modalDto.userId!,
@@ -136,13 +109,13 @@ export const useAction = () => {
         userName: modalDto.name,
       })
         .then(() => {
-          handleChangeModalDto({
+          setModalDto({
             ...defaultModal,
             roleId:
               roleDto?.roles.find((item) => item.name === "User")?.id ?? null,
           });
 
-          getAccountListRequest.run(1, accountDto.pageSize, endSearchText);
+          fetchAccountList(1, accountDto.pageSize, endSearchText);
 
           showMessage("角色刪除成功!", "green");
         })
@@ -154,7 +127,52 @@ export const useAction = () => {
           }
         })
         .finally(() => {
-          handleChangeModalDto({
+          setLoading(false);
+        });
+    }),
+    {
+      wait: 500,
+    }
+  );
+
+  //复制账号
+  const { run: handleCopyUser } = useDebounceFn(
+    useMemoizedFn(async (id: number) => {
+      if (!isNil(id)) {
+        setCopyDto({
+          id,
+          loading: true,
+        });
+      }
+
+      await getCopyUser({ userId: id })
+        .then(async (res) => {
+          if (!res) {
+            showMessage("複製失敗,失敗原因:獲取不到帳號密碼!", "bg-red-500");
+            return;
+          }
+
+          const copyContent = `帳號:${res?.userName}，密碼:${res?.passWord}`;
+
+          await navigator.clipboard
+            .writeText(copyContent)
+            .then(() => {
+              showMessage("已複製！", "bg-green-500");
+            })
+            .catch(() => {
+              showMessage("複製失敗！", "bg-red-500");
+            });
+        })
+        .catch((error) => {
+          if (error !== "Unauthorized") {
+            isPermissionRevoked(error)
+              ? showMessage(`您已無權限進行操作`, "red")
+              : showMessage(`複製失敗,失敗原因:${error}`, "red");
+          }
+        })
+        .finally(() => {
+          setCopyDto({
+            id: null,
             loading: false,
           });
         });
@@ -164,241 +182,161 @@ export const useAction = () => {
     }
   );
 
-  // 复制账号信息
-  const { run: handleCopyUser } = useDebounceFn(
-    useMemoizedFn(async (id: number) => {
-      if (!isNil(id)) {
-        setCopyDto({
-          id,
-          loading: true,
-        });
+  //获取list列表
+  const handleGetRoleList = () => {
+    setLoading(true);
 
-        await getCopyUser({ userId: id })
-          .then(async (res) => {
-            if (res) {
-              try {
-                await navigator.clipboard.writeText(
-                  `帳號:${res?.userName}，密碼:${res?.passWord}`
-                );
-
-                showMessage("已複製！", "bg-green-500");
-              } catch {
-                showMessage("複製失敗！", "bg-red-500");
-              }
-            } else {
-              showMessage("複製失敗,失敗原因:獲取不到帳號密碼!", "bg-red-500");
-            }
-          })
-          .catch((error) => {
-            if (error !== "Unauthorized") {
-              isPermissionRevoked(error)
-                ? showMessage(`您已無權限進行操作`, "bg-red-500")
-                : showMessage(`複製失敗,失敗原因:${error}`, "bg-red-500");
-            }
-          })
-          .finally(() => {
-            setCopyDto({
-              id: null,
-              loading: false,
-            });
-          });
-      }
-    }),
-    {
-      wait: 500,
-    }
-  );
-
-  const getRoleListRequest = useMemoizedFn(() => {
-    getRoleList({
+    const params = {
       pageIndex: 1,
       pageSize: 2147483647,
       keyWord: "",
       systemSource: SystemSource.SmartTalk,
-    })
+    };
+
+    getRoleList(params)
       .then((res) => {
-        const fliterData = res?.roles
+        const filterData = res?.roles
           .reverse()
-          .filter((item: any) => item.name !== "SuperAdministrator");
+          .filter((roleItem: any) => roleItem.name !== "SuperAdministrator");
 
         setRoleDto({
-          count: fliterData?.length ?? 0,
-          roles: fliterData ?? [],
-        });
-
-        handleChangeModalDto({
-          roleId:
-            fliterData.find((item: any) => item.name === "User")?.id ?? null,
+          count: filterData?.length ?? 0,
+          roles: filterData ?? [],
         });
       })
       .catch((error) => {
+        setRoleDto(defaultRole);
+
         if (isPermissionRevoked(error))
           showMessage(`您已無權限進行操作`, "red");
-
-        setRoleDto(defaultRole);
+      })
+      .finally(() => {
+        setLoading(false);
       });
-  });
-
-  const { run: handleCreateOrEditUser } = useDebounceFn(
-    useMemoizedFn(() => {
-      if (modalDto.type === null) {
-        return;
-      } else if (modalDto.type === "add") {
-        if (isEmpty(modalDto.name) || isNil(modalDto.roleId)) {
-          handleChangeErrorDto({
-            empty: true,
-          });
-
-          return;
-        }
-
-        handleChangeModalDto({
-          loading: true,
-        });
-
-        postCreateUser({
-          userName: modalDto.name,
-          roleId: modalDto.roleId!,
-        })
-          .then(() => {
-            handleChangeModalDto({
-              ...defaultModal,
-              roleId:
-                roleDto?.roles.find((item) => item.name === "User")?.id ?? null,
-            });
-
-            getAccountListRequest.run(1, accountDto.pageSize, endSearchText);
-
-            handleChangeErrorDto(defaultError);
-
-            showMessage("角色創建成功!", "green");
-          })
-          .catch((error) => {
-            if (error !== "Unauthorized") {
-              const isHaveSameUser = error.includes(
-                "An error occurred while saving the entity changes. See the inner exception for details."
-              );
-
-              isHaveSameUser
-                ? handleChangeErrorDto({
-                    same: true,
-                  })
-                : isPermissionRevoked(error)
-                ? showMessage(`您已無權限進行操作`, "red")
-                : showMessage(`角色創建失敗,失敗原因:${error}`, "red");
-            }
-          })
-          .finally(() => {
-            handleChangeModalDto({
-              loading: false,
-            });
-          });
-      } else {
-        if (isNil(modalDto.userId)) {
-          return;
-        }
-
-        handleChangeModalDto({
-          loading: true,
-        });
-
-        postUpdateUser({
-          userId: modalDto.userId!,
-          oldRoleId: modalDto.oldRoleId!,
-          newRoleId: modalDto.roleId!,
-        })
-          .then(() => {
-            handleChangeModalDto({
-              ...defaultModal,
-              roleId:
-                roleDto?.roles.find((item) => item.name === "User")?.id ?? null,
-            });
-
-            getAccountListRequest.run(1, accountDto.pageSize, endSearchText);
-
-            handleChangeErrorDto(defaultError);
-
-            showMessage("角色更改成功!", "green");
-          })
-          .catch((error) => {
-            if (error !== "Unauthorized") {
-              const isHasSameUser = (error as string).includes(
-                "An error occurred while saving the entity changes. See the inner exception for details."
-              );
-
-              if (isHasSameUser) {
-                handleChangeErrorDto({
-                  same: true,
-                });
-              } else {
-                isPermissionRevoked(error)
-                  ? showMessage(`您已無權限進行操作`, "red")
-                  : showMessage(`角色更改失敗,失敗原因:${error}`, "red");
-              }
-            }
-          })
-          .finally(() => {
-            handleChangeModalDto({
-              loading: false,
-            });
-          });
-      }
-    }),
-    {
-      wait: 500,
-    }
-  );
-
-  // 顯示操作提示信息
-  const showMessage = (text: string, bgColor: string) => {
-    setMessageText(text);
-    setMessageBgColor(bgColor);
-
-    setTimeout(() => {
-      setMessageText("");
-    }, 1500);
   };
 
-  const getAccountListReq = useMemoizedFn(
-    async (
-      pageIndex: number = 1,
-      pageSize: number = 20,
-      keyWord: string = ""
-    ) => {
-      await getAccountList({
-        pageIndex,
-        pageSize,
-        userName: keyWord,
+  //获取account分页
+  const fetchAccountList = (pageIndex = 1, pageSize = 20, userName = "") => {
+    setLoading(true);
+
+    getAccountList({ pageIndex, pageSize, userName })
+      .then((res) => {
+        setAccountDto((prev) => ({
+          ...prev,
+          pageIndex,
+          pageSize,
+          count: res?.count ?? 0,
+          userAccounts: res?.userAccounts ?? [],
+        }));
       })
-        .then((res) => {
-          handleChangeAccountDto({
-            pageIndex,
-            pageSize,
-            count: res?.count ?? 0,
-            userAccounts: res?.userAccounts ?? [],
+      .catch(() => {
+        setAccountDto((prev) => ({
+          ...prev,
+          pageIndex,
+          pageSize,
+          count: 0,
+          userAccounts: [],
+        }));
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  //创建账号
+  const handleCreateUser = useDebounceFn(
+    () => {
+      if (isEmpty(modalDto.name) && isNil(modalDto.roleId)) {
+        setErrorDto({ ...defaultError, empty: true });
+        return;
+      }
+
+      setLoading(true);
+
+      postCreateUser({
+        userName: modalDto.name,
+        roleId: modalDto.roleId!,
+      })
+        .then(() => {
+          setModalDto({
+            ...defaultModal,
+            roleId:
+              roleDto?.roles.find((item) => item.name === "User")?.id ?? null,
           });
+
+          fetchAccountList(1, accountDto.pageSize, endSearchText);
+          setModalDto(defaultModal);
+          setErrorDto(defaultError);
+
+          showMessage("角色创建成功!", "green");
         })
-        .catch(() => {
-          handleChangeAccountDto({
-            pageIndex,
-            pageSize,
-            count: 0,
-            userAccounts: [],
-          });
+        .catch((error) => {
+          if (error !== "Unauthorized") {
+            const isHaveSameUser = error.includes(
+              "An error occurred while saving the entity changes. See the inner exception for details."
+            );
+
+            isHaveSameUser
+              ? setErrorDto({
+                  same: true,
+                  empty: false,
+                })
+              : isPermissionRevoked(error)
+              ? showMessage(`您已無權限進行操作`, "red")
+              : showMessage(`角色創建失敗,失敗原因:${error}`, "red");
+          }
+        })
+        .finally(() => {
+          setLoading(false);
         });
-    }
+    },
+    { wait: 500 }
   );
 
-  const getAccountListRequest = useRequest(getAccountListReq, {
-    manual: true,
-    debounceWait: 1000,
-    onBefore: () => {
-      handleChangeAccountDto({ loading: true });
+  //修改角色
+  const handleEditUser = useDebounceFn(
+    () => {
+      if (isNil(modalDto.userId)) {
+        return;
+      }
+
+      setLoading(true);
+
+      postUpdateUser({
+        userId: modalDto.userId!,
+        oldRoleId: modalDto.oldRoleId!,
+        newRoleId: modalDto.oldRoleId!,
+      })
+        .then(() => {
+          setModalDto({
+            ...defaultModal,
+            roleId:
+              roleDto?.roles.find((item) => item.name === "User")?.id ?? null,
+          });
+
+          fetchAccountList(1, accountDto.pageSize, endSearchText);
+          setErrorDto(defaultError);
+          showMessage("角色更改成功!", "green");
+        })
+        .catch((error) => {
+          if (error !== "Unauthorized") {
+            const isHaveSameUser = error.includes(
+              "An error occurred while saving the entity changes. See the inner exception for details."
+            );
+
+            isHaveSameUser
+              ? setErrorDto({
+                  same: true,
+                  empty: false,
+                })
+              : isPermissionRevoked(error)
+              ? showMessage(`您已無權限進行操作`, "red")
+              : showMessage(`角色修改失敗,失敗原因:${error}`, "red");
+          }
+        });
     },
-    onFinally: () => {
-      handleChangeAccountDto({ loading: false });
-    },
-  });
+    { wait: 500 }
+  );
 
   useDebounceEffect(
     () => {
@@ -406,11 +344,10 @@ export const useAction = () => {
     },
     [accountDto.userName],
     {
-      wait: 500,
+      wait: 1000,
     }
   );
 
-  //获取页面高度
   useEffect(() => {
     const handleResize = () => {
       //  ant-table-header 的高度
@@ -427,9 +364,9 @@ export const useAction = () => {
 
     handleResize();
 
-    getAccountListRequest.run();
+    fetchAccountList(); //获取account分页
 
-    getRoleListRequest();
+    handleGetRoleList(); //放在useEffect里渲染 list列表
 
     window.addEventListener("resize", handleResize);
 
@@ -439,7 +376,7 @@ export const useAction = () => {
   }, []);
 
   useUpdateEffect(() => {
-    getAccountListRequest.run(1, accountDto.pageSize, endSearchText);
+    fetchAccountList(1, accountDto.pageSize, endSearchText);
   }, [endSearchText]);
 
   return {
@@ -449,21 +386,20 @@ export const useAction = () => {
     roleDto,
     errorDto,
     modalDto,
-    openModal,
-    accountDto,
+    loading,
     messageText,
-    paginationDtos,
+    accountDto,
+    defaultModal,
+    handleEditUser,
+    handleCreateUser,
     handleCopyUser,
     tableWrapperRef,
-    openDeletePopups,
-    handleDeleteUser,
-    getAccountListRequest,
-    handleCreateOrEditUser,
+    handleDeleteAccount,
+    setLoading,
+    setModalDto,
     setCopyDto,
     setAccountDto,
-    getRoleListRequest,
-    handleChangeModalDto,
-    handleChangeAccountDto,
-    handleChangeErrorDto,
+    fetchAccountList,
+    handleGetRoleList,
   };
 };

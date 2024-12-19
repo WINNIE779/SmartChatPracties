@@ -31,7 +31,7 @@ export interface IModalDto {
   oldName: string;
   oldRoleId: number | null;
   userId: number | null;
-  loading: boolean;
+  // loading: boolean;
 }
 
 export interface IError {

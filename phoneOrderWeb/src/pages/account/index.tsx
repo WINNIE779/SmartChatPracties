@@ -7,25 +7,30 @@ import { CustomMessage } from "@/components/custom-message";
 import { IRole, IUserAccount } from "@/services/api/conversation/dto";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
 
 export const AccountList = () => {
   const navigate = useNavigate();
 
+  const { role, userInfo } = useAuth();
+
   const {
     form,
-    tableWrapperRef,
-    messageText,
     height,
-    accountDto,
-    handleCopyUser,
-    modalDto,
     roleDto,
-    handleDeleteUser,
-    getAccountListRequest,
-    handleCreateOrEditUser,
-    handleChangeErrorDto,
-    handleChangeModalDto,
-    handleChangeAccountDto,
+    modalDto,
+    loading,
+    messageText,
+    accountDto,
+    defaultModal,
+    handleEditUser,
+    handleCreateUser,
+    handleCopyUser,
+    tableWrapperRef,
+    handleDeleteAccount,
+    setModalDto,
+    setAccountDto,
+    fetchAccountList,
   } = useAction();
 
   const columns = [
@@ -40,7 +45,6 @@ export const AccountList = () => {
       dataIndex: "roles",
       key: "roles",
       width: 200,
-
       render: (record: IRole[]) => {
         return (
           <div className="truncate">
@@ -54,7 +58,6 @@ export const AccountList = () => {
       dataIndex: "createdOn",
       key: "createdOn",
       width: 200,
-
       render: (record: string) => {
         return dayjs.utc(record).format("MM/DD/YYYY HH:mm:ss");
       },
@@ -74,14 +77,22 @@ export const AccountList = () => {
           <Button
             className={`flex-1 cursor-pointer p-2 rounded-lg items-center flex justify-center border-gray-400 border border-solid`}
             onClick={() => {
-              handleChangeModalDto({
+              setModalDto({
                 type: "delete",
                 visible: true,
                 name: record.userName,
                 roleId: record?.roles[0]?.id ?? null,
                 userId: record?.id,
+                oldName: "",
+                oldRoleId: null,
               });
             }}
+            disabled={
+              role === "User" ||
+              (role === "Administrator" &&
+                (record?.roles[0]?.name === "Administrator" ||
+                  record?.roles[0]?.name === "SuperAdministrator"))
+            }
           >
             刪除賬號
           </Button>
@@ -89,7 +100,7 @@ export const AccountList = () => {
           <Button
             className={`flex-1 cursor-pointer p-2 rounded-lg items-center flex justify-center border-gray-400 border border-solid`}
             onClick={() => {
-              handleChangeModalDto({
+              setModalDto({
                 type: "edit",
                 name: record.userName,
                 roleId: record?.roles[0]?.id ?? null,
@@ -99,6 +110,9 @@ export const AccountList = () => {
                 visible: true,
               });
             }}
+            disabled={
+              role !== "SuperAdministrator" || record?.id === userInfo.count
+            }
           >
             修改角色
           </Button>
@@ -106,6 +120,12 @@ export const AccountList = () => {
           <Button
             className={`flex-1 cursor-pointer p-2 rounded-lg items-center flex justify-center border-gray-400 border border-solid`}
             onClick={() => handleCopyUser(record.id)}
+            disabled={
+              role !== "SuperAdministrator" &&
+              role === "Administrator" &&
+              (record?.roles[0]?.name === "Administrator" ||
+                record?.id !== userInfo.count)
+            }
           >
             複製信息
           </Button>
@@ -131,21 +151,24 @@ export const AccountList = () => {
             placeholder="搜索"
             style={{ width: "12.5rem" }}
             value={accountDto.userName}
-            onChange={(e) =>
-              handleChangeAccountDto({
-                userName: e.target.value,
-              })
-            }
+            onChange={(e) => {
+              setAccountDto((prev) => ({ ...prev, userName: e.target.value }));
+            }}
           />
         </div>
 
         <Button
-          onClick={() =>
-            handleChangeModalDto({
+          onClick={() => {
+            setModalDto({
               type: "add",
+              name: "",
+              roleId: null,
+              oldName: "",
+              oldRoleId: null,
+              userId: null,
               visible: true,
-            })
-          }
+            });
+          }}
         >
           创建账号
         </Button>
@@ -156,7 +179,7 @@ export const AccountList = () => {
         ref={tableWrapperRef}
       >
         <Table
-          loading={accountDto.loading}
+          loading={loading}
           dataSource={accountDto.userAccounts}
           columns={columns}
           scroll={{ y: height, x: 1200 }}
@@ -173,7 +196,7 @@ export const AccountList = () => {
           current={accountDto.pageIndex}
           pageSize={accountDto.pageSize}
           onChange={(pageIndex, pageSize) => {
-            getAccountListRequest.run(pageIndex, pageSize, accountDto.userName);
+            fetchAccountList(pageIndex, pageSize, accountDto.userName);
           }}
         />
       </div>
@@ -199,17 +222,13 @@ export const AccountList = () => {
             <div
               className="flex-1 text-center py-3 select-none font-semibold"
               onClick={() => {
-                !modalDto.loading &&
-                  handleChangeModalDto({
-                    type: null,
-                    visible: false,
-                    name: "",
-                    roleId:
-                      roleDto.roles.find((item) => item.name === "User")?.id ??
-                      null,
-                    oldRoleId: null,
-                    oldName: "",
-                  });
+                setModalDto({
+                  ...defaultModal,
+                  visible: false,
+                  roleId:
+                    roleDto.roles.find((item) => item.name === "User")?.id ??
+                    null,
+                });
               }}
             >
               取消
@@ -217,13 +236,13 @@ export const AccountList = () => {
             <div className="w-[1px] h-[46px] py-3 bg-gray-400"></div>
             <div
               className="flex-1 text-center py-3 select-none font-semibold"
-              onClick={() => handleCreateOrEditUser()}
+              onClick={() =>
+                modalDto.type === "add"
+                  ? handleCreateUser.run()
+                  : handleEditUser.run()
+              }
             >
-              {modalDto.type === "add"
-                ? "創建"
-                : modalDto.type === "edit"
-                ? "保存"
-                : ""}
+              {modalDto.type === "add" ? "創建" : "保存"}
             </div>
           </div>
         }
@@ -237,7 +256,15 @@ export const AccountList = () => {
           },
         }}
       >
-        <Form form={form} layout="vertical">
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={() => {
+            modalDto.type === "add"
+              ? handleCreateUser.run()
+              : handleEditUser.run();
+          }}
+        >
           <Form.Item
             label="賬號名稱"
             name="userName"
@@ -247,35 +274,29 @@ export const AccountList = () => {
               placeholder={modalDto.type === "add" ? "" : modalDto.name}
               value={modalDto.name}
               disabled={modalDto.type === "edit"}
-              onChange={(e) => {
-                if (!modalDto.loading) {
-                  handleChangeErrorDto({ empty: false, same: false });
-                  handleChangeModalDto({
-                    name: e.target.value.replace(/[^a-zA-Z]/g, ""),
-                  });
-                }
-              }}
+              onChange={(e) =>
+                setModalDto((prev) => ({ ...prev, name: e.target.value }))
+              }
             />
           </Form.Item>
-          <Form.Item label="角色" name="角色">
+          <Form.Item label="角色" name="role">
             <Radio.Group
               value={modalDto.roleId}
               onChange={(e) =>
-                !modalDto.loading &&
-                handleChangeModalDto({
-                  roleId: e.target.value,
-                })
+                setModalDto((prev) => ({ ...prev, roleId: e.target.value }))
               }
             >
-              {roleDto.roles.map((item) => (
-                <Radio
-                  key={item.id}
-                  value={item.id}
-                  disabled={item.name === "Administrator"}
-                >
-                  {item.displayName}
-                </Radio>
-              ))}
+              {roleDto.roles.map((item) => {
+                return (
+                  <Radio
+                    key={item.id}
+                    value={item.id}
+                    disabled={modalDto.name === "Administrator"}
+                  >
+                    {item.displayName}
+                  </Radio>
+                );
+              })}
             </Radio.Group>
           </Form.Item>
         </Form>
@@ -291,28 +312,21 @@ export const AccountList = () => {
           <div className="w-full flex cursor-pointer border-t border-solid border-gray-400">
             <div
               className="flex-1 text-center py-3 select-none font-semibold"
-              onClick={() => {
-                !modalDto.loading &&
-                  handleChangeModalDto({
-                    type: null,
-                    visible: false,
-                    name: "",
-                    roleId:
-                      roleDto.roles.find((item) => item.name === "User")?.id ??
-                      null,
-                    oldRoleId: null,
-                    oldName: "",
-                  });
-              }}
+              onClick={() =>
+                setModalDto({
+                  ...defaultModal,
+                  roleId:
+                    roleDto.roles.find((item) => item.name === "User")?.id ??
+                    null,
+                })
+              }
             >
               取消
             </div>
             <div className="w-[1px] h-[46px] py-3 bg-gray-400"></div>
             <div
               className="flex-1 text-center py-3 select-none font-semibold"
-              onClick={() => {
-                !modalDto.loading && handleDeleteUser();
-              }}
+              onClick={handleDeleteAccount}
             >
               <div>確認</div>
             </div>
