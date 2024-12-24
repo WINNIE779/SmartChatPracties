@@ -9,7 +9,6 @@ export const HomePage = () => {
   const { userInfo } = useAuth();
 
   const handleNavigate = (path: string, allowedRoles: string[]) => {
-    console.log("userInfo.roleName:", userInfo.roleName);
     if (allowedRoles.includes(userInfo.roleName)) {
       navigate(path);
     } else {

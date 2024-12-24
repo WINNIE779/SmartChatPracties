@@ -62,9 +62,13 @@ export const Account = () => {
             className="flex-1 cursor-pointer p-2 items-center flex justify-center"
             onClick={() => {
               setModal({
-                ...defaultModal,
                 visible: true,
                 type: "delete",
+                userId: record?.id,
+                userName: record?.userName,
+                roleId: record?.roles[0]?.id ?? 0,
+                oldName: "",
+                oldRoleId: null,
               });
             }}
           >
@@ -119,13 +123,9 @@ export const Account = () => {
           <Button
             onClick={() => {
               setModal({
+                ...defaultModal,
                 type: "create",
                 visible: true,
-                oldName: "",
-                oldRoleId: null,
-                roleId: null,
-                userId: null,
-                userName: "",
               });
             }}
           >
@@ -176,9 +176,6 @@ export const Account = () => {
                 setModal({
                   ...defaultModal,
                   visible: false,
-                  roleId:
-                    roleDto.roles.find((item) => item.name === "User")?.id ??
-                    null,
                 });
               }}
               className="flex-1 text-center py-3 select-none font-semibold"
@@ -217,7 +214,7 @@ export const Account = () => {
               value={modalDto.userName}
               disabled={modalDto.type === "edit"}
               onChange={(e) =>
-                setModal((prev) => ({ ...prev, name: e.target.value }))
+                setModal((prev) => ({ ...prev, userName: e.target.value }))
               }
             />
           </Form.Item>

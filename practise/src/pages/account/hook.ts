@@ -11,8 +11,9 @@ import {
   IPageDtos,
   SystemSource,
 } from "@/sercices/api/account/dto";
-import { useDebounceFn } from "ahooks";
+import { useDebounceFn, useUpdateEffect } from "ahooks";
 import { message } from "antd";
+import { isEmpty, isNil } from "ramda";
 import { useEffect, useState } from "react";
 import React from "react";
 
@@ -68,6 +69,7 @@ export const useAction = () => {
       if (modalDto.userId === null) {
         return;
       }
+      console.log(123);
 
       setLoading(true);
 
@@ -78,13 +80,7 @@ export const useAction = () => {
       })
         .then(() => {
           setModal({
-            userName: "",
-            roleId: null,
-            userId: null,
-            oldName: "",
-            oldRoleId: null,
-            type: "delete",
-            visible: true,
+            ...defaultModal,
           });
 
           fetchAccountList(1, accountDto.pageSize, pageSearchText);
@@ -109,12 +105,14 @@ export const useAction = () => {
       postUpdateUser({
         userId: modalDto.userId!,
         oldRoleId: modalDto.oldRoleId!,
-        newRoleId: modalDto.oldRoleId!,
+        newRoleId: modalDto.roleId!,
       })
         .then((res) => {
           setModal({ ...defaultModal });
 
           fetchAccountList(1, accountDto.pageSize, pageSearchText);
+
+          message.success("成功修改角色");
         })
         .catch((error) => {
           message.error("errror");
@@ -129,6 +127,10 @@ export const useAction = () => {
   //创建
   const handleCreateUser = useDebounceFn(
     () => {
+      if (isEmpty(modalDto.userName) && isNil(modalDto.roleId)) {
+        return;
+      }
+
       setLoading(true);
 
       postCreateUser({
@@ -136,8 +138,6 @@ export const useAction = () => {
         roleId: modalDto.roleId!,
       })
         .then((res) => {
-          console.log(res);
-
           setModal({ ...defaultModal });
 
           fetchAccountList(1, accountDto.pageSize, pageSearchText);
@@ -145,6 +145,7 @@ export const useAction = () => {
           message.success("create success");
         })
         .catch((error) => {
+          console.error("API Error Details:", error?.response?.data);
           message.error("create error");
         })
         .finally(() => {
@@ -215,17 +216,9 @@ export const useAction = () => {
     handleGetRoleList();
 
     fetchAccountList();
-
-    const handleEvent = () => console.log("Event triggered");
-
-    window.addEventListener("resize", handleEvent);
-
-    return () => {
-      window.removeEventListener("resize", handleEvent);
-    };
   }, []);
 
-  useEffect(() => {
+  useUpdateEffect(() => {
     fetchAccountList(
       accountDto.pageIndex,
       accountDto.pageSize,
