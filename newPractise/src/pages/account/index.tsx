@@ -16,7 +16,7 @@ export const Account = () => {
     handleUpdateUser,
     handleCreateUser,
     handleDeleteUser,
-    setModal,
+    setModalDto,
     setAccountDto,
     fetchAccountList,
   } = useAction();
@@ -53,7 +53,7 @@ export const Account = () => {
           <Button
             className="items-center flex justify-centerflex-1 cursor-pointer"
             onClick={() => {
-              setModal({
+              setModalDto({
                 type: "edit",
                 visible: true,
                 userId: record?.id,
@@ -69,7 +69,7 @@ export const Account = () => {
           <Button
             className="items-center flex justify-centerflex-1 cursor-pointer"
             onClick={() => {
-              setModal({
+              setModalDto({
                 ...defaultModal,
                 visible: true,
                 type: "delete",
@@ -105,7 +105,7 @@ export const Account = () => {
         />
         <Button
           onClick={() => {
-            setModal({
+            setModalDto({
               ...defaultModal,
               type: "create",
               visible: true,
@@ -151,7 +151,7 @@ export const Account = () => {
           <div className="flex flex-row justify-center items-center w-full cursor-pointer">
             <div
               onClick={() => {
-                setModal({
+                setModalDto({
                   ...defaultModal,
                   visible: false,
                 });
@@ -190,7 +190,7 @@ export const Account = () => {
               placeholder={modalDto.type === "create" ? "" : modalDto.userName}
               value={modalDto.userName}
               onChange={(e) =>
-                setModal((prev) => ({ ...prev, userName: e.target.value }))
+                setModalDto((prev) => ({ ...prev, userName: e.target.value }))
               }
             />
           </Form.Item>
@@ -198,7 +198,7 @@ export const Account = () => {
             <Radio.Group
               value={modalDto.roleId}
               onChange={(e) =>
-                setModal((prev) => ({ ...prev, roleId: e.target.value }))
+                setModalDto((prev) => ({ ...prev, roleId: e.target.value }))
               }
             >
               {roleDto.roles
@@ -223,7 +223,7 @@ export const Account = () => {
             <div
               className="text-center py-3 flex-1"
               onClick={() => {
-                setModal(defaultModal);
+                setModalDto(defaultModal);
               }}
             >
               取消

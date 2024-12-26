@@ -56,7 +56,7 @@ export const useAction = () => {
 
   const [accountDto, setAccountDto] = useState<IAccountDto>(defaultAccount);
 
-  const [modalDto, setModal] = useState<IModalDto>(defaultModal);
+  const [modalDto, setModalDto] = useState<IModalDto>(defaultModal);
 
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -75,7 +75,7 @@ export const useAction = () => {
         roleId: modalDto.roleId!,
       })
         .then((res) => {
-          setModal({ ...defaultModal });
+          setModalDto({ ...defaultModal });
 
           message.success("创建成功");
 
@@ -101,7 +101,7 @@ export const useAction = () => {
         newRoleId: modalDto.roleId!,
       })
         .then((res) => {
-          setModal({ ...defaultModal });
+          setModalDto({ ...defaultModal });
 
           message.success("已修改");
 
@@ -131,7 +131,7 @@ export const useAction = () => {
         roleId: modalDto.roleId!,
       })
         .then(() => {
-          setModal({
+          setModalDto({
             ...defaultModal,
           });
 
@@ -233,7 +233,7 @@ export const useAction = () => {
     handleUpdateUser,
     handleCreateUser,
     handleDeleteUser,
-    setModal,
+    setModalDto,
     setAccountDto,
     fetchAccountList,
   };
