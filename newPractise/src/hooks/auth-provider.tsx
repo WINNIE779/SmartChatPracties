@@ -1,9 +1,7 @@
 import { IUserAccount, SystemSource } from "@/sercices/api/account/dto";
 import { GetUserAcountInfo } from "@/sercices/api/login";
 import { IRolePermission } from "@/sercices/api/login/dtos";
-
 import { useRequest, useUpdateEffect } from "ahooks";
-import { string } from "prop-types";
 import { isEmpty, isNil } from "ramda";
 import React, { useEffect, useMemo } from "react";
 import { createContext, useState } from "react";
@@ -33,7 +31,9 @@ export interface IAuthContextProps {
 export const AuthContext = createContext<IAuthContextProps>(null!);
 
 export const AuthProvider = (props: { children: React.ReactNode }) => {
-  const [token, setToken] = useState<string>("");
+  const [token, setToken] = useState<string>(
+    localStorage.getItem("token") ?? ""
+  );
 
   const [userInfo, setUserInfo] = useState<IUser>(defaultUserInfo);
 
@@ -88,21 +88,18 @@ export const AuthProvider = (props: { children: React.ReactNode }) => {
 
       localStorage.setItem("token", token);
 
-      console.log(
-        "Token stored in localStorage:",
-        localStorage.getItem("token")
-      );
-
       callback && callback();
     }
   };
 
   const signOut = (callback?: VoidFunction) => {
-    localStorage.setItem(userName, "");
+    localStorage.setItem("userName", "");
 
-    localStorage.setItem(token, "");
+    localStorage.setItem("token", "");
 
     setUserName("");
+
+    setToken("");
 
     callback && callback();
   };
