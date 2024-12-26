@@ -79,7 +79,7 @@ export const useAction = () => {
 
           message.success("创建成功");
 
-          fetchAccountList(1, accountDto.pageSize, searchText);
+          fetchAccountList(1, accountDto.pageSize);
         })
         .catch((error) => {
           message.error("error");
@@ -105,7 +105,7 @@ export const useAction = () => {
 
           message.success("已修改");
 
-          fetchAccountList(1, accountDto.pageSize, searchText);
+          fetchAccountList(1, accountDto.pageSize);
         })
         .catch((error) => {
           message.error("error");
@@ -137,7 +137,7 @@ export const useAction = () => {
 
           message.success("成功删除！");
 
-          fetchAccountList(1, accountDto.pageSize, searchText);
+          fetchAccountList(1, accountDto.pageSize);
         })
         .catch((error) => {
           message.error("error");
