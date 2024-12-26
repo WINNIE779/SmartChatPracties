@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 export const Main = () => {
   const navigate = useNavigate();
 
-  const { userInfo, userRoles } = useAuth();
+  const { userInfo, getUserRole, getUserPermission } = useAuth();
 
   return (
     <div className="h-screen p-4 flex flex-col">
@@ -22,14 +22,14 @@ export const Main = () => {
       </div>
       <div className="flex flex-col justify-center items-center p-6">
         角色
-        <div>{userRoles}</div>
+        <div>{getUserRole}</div>
       </div>
-      {/* <div className="flex flex-col justify-center items-center p-6">
+      <div className="flex flex-col justify-center items-center p-6">
         角色权限
-        {userInfo.permission.map((permissionItem, index) => (
+        {getUserPermission.map((permissionItem, index) => (
           <div key={index}>{permissionItem}</div>
         ))}
-      </div> */}
+      </div>
     </div>
   );
 };

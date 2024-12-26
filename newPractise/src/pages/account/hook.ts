@@ -140,7 +140,7 @@ export const useAction = () => {
           fetchAccountList(1, accountDto.pageSize, searchText);
         })
         .catch((error) => {
-          message.error("删除失败！");
+          message.error("error");
         })
         .finally(() => {
           setLoading(false);

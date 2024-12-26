@@ -51,7 +51,7 @@ export const Account = () => {
       render: (_: any, record: IUserAccount) => (
         <div className="space-x-4 flex">
           <Button
-            className="items-center flex justify-centerflex-1 cursor-pointer"
+            className="items-center flex justify-center flex-1 cursor-pointer"
             onClick={() => {
               setModalDto({
                 type: "edit",
@@ -67,7 +67,7 @@ export const Account = () => {
             修改角色
           </Button>
           <Button
-            className="items-center flex justify-centerflex-1 cursor-pointer"
+            className="items-center flex justify-center flex-1 cursor-pointer"
             onClick={() => {
               setModalDto({
                 ...defaultModal,
@@ -175,9 +175,10 @@ export const Account = () => {
       >
         <Form
           onFinish={() => {
-            modalDto.type !== "delete" && modalDto.type === "edit"
-              ? handleUpdateUser.run()
-              : handleCreateUser.run();
+            modalDto.type !== "delete" &&
+              (modalDto.type === "edit"
+                ? handleUpdateUser.run()
+                : handleCreateUser.run());
           }}
         >
           <Form.Item

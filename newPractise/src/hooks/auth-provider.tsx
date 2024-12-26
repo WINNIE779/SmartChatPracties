@@ -1,13 +1,9 @@
-import {
-  IPermission,
-  IRole,
-  IUserAccount,
-  SystemSource,
-} from "@/sercices/api/account/dto";
+import { IUserAccount, SystemSource } from "@/sercices/api/account/dto";
 import { GetUserAcountInfo } from "@/sercices/api/login";
 import { IRolePermission } from "@/sercices/api/login/dtos";
 
 import { useRequest, useUpdateEffect } from "ahooks";
+import { string } from "prop-types";
 import { isEmpty, isNil } from "ramda";
 import React, { useEffect, useMemo } from "react";
 import { createContext, useState } from "react";
@@ -30,7 +26,8 @@ export interface IAuthContextProps {
   signIn: (token: string, userName: string, callback?: VoidFunction) => void;
   signOut: (callback?: VoidFunction) => void;
   userInfo: IUser;
-  userRoles: "超级管理员" | "管理员" | "操作员" | null;
+  getUserRole: string[];
+  getUserPermission: string[];
 }
 
 export const AuthContext = createContext<IAuthContextProps>(null!);
@@ -49,8 +46,6 @@ export const AuthProvider = (props: { children: React.ReactNode }) => {
     pollingInterval: 3000,
 
     onSuccess: (res: IUser) => {
-      console.log("res", res);
-
       setUserInfo({
         count: res?.count ?? 0,
         rolePermissionData: res?.rolePermissionData ?? [],
@@ -67,22 +62,16 @@ export const AuthProvider = (props: { children: React.ReactNode }) => {
     },
   });
 
-  const getRole = (roles: IRole[]) => {
-    const roleNames = roles.flatMap((item) => item.displayName);
+  const getUserRole = useMemo(() => {
+    return userInfo?.rolePermissionData
+      ?.flatMap((role) => role.role || [])
+      .map((userRole) => userRole.displayName || "");
+  }, [userInfo.rolePermissionData]);
 
-    if (roleNames.includes("超级管理员")) {
-      return "超级管理员";
-    }
-
-    if (roleNames.includes("管理员")) {
-      return "管理员";
-    }
-
-    return "操作员";
-  };
-
-  const userRoles = useMemo(() => {
-    return getRole(userInfo?.rolePermissionData.map((item) => item.role) ?? []);
+  const getUserPermission = useMemo(() => {
+    return userInfo?.rolePermissionData
+      ?.flatMap((permission) => permission.permissions || [])
+      .map((permissionName) => permissionName.name || "");
   }, [userInfo.rolePermissionData]);
 
   const signIn = async (
@@ -99,14 +88,19 @@ export const AuthProvider = (props: { children: React.ReactNode }) => {
 
       localStorage.setItem("token", token);
 
+      console.log(
+        "Token stored in localStorage:",
+        localStorage.getItem("token")
+      );
+
       callback && callback();
     }
   };
 
   const signOut = (callback?: VoidFunction) => {
-    localStorage.setItem("userName", "");
+    localStorage.setItem(userName, "");
 
-    localStorage.setItem("token", "");
+    localStorage.setItem(token, "");
 
     setUserName("");
 
@@ -131,7 +125,8 @@ export const AuthProvider = (props: { children: React.ReactNode }) => {
         signOut,
         userName,
         userInfo,
-        userRoles,
+        getUserRole,
+        getUserPermission,
       }}
     >
       {props.children}
