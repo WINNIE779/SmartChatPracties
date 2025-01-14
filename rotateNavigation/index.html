@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Animated Navigation</title>
+  </head>
+
+  <body>
+    <nav class="nav" id="nav">
+      <button class="icon" id="toggle">
+        <div class="menu">Menu</div>
+        <div class="close" style="display: none">Close</div>
+      </button>
+
+      <div class="routes" style="display: none">
+        <a href="A" class="route" id="A">A</a>
+        <a href="B" class="route" id="B">B</a>
+        <a href="C" class="route" id="C">C</a>
+      </div>
+    </nav>
+
+    <div class="content">
+      <div
+        class="pic active"
+        id="A"
+        style="
+          background-image: url('https://images.unsplash.com/photo-1572276596237-5db2c3e16c5d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80');
+        "
+      >
+        A
+      </div>
+
+      <div
+        class="pic"
+        id="B"
+        style="
+          background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1353&q=80');
+        "
+      >
+        B
+      </div>
+
+      <div
+        class="pic"
+        id="C"
+        style="
+          background-image: url('https://images.unsplash.com/photo-1549880338-65ddcdfd017b?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80');
+        "
+      >
+        C
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
